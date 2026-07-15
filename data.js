@@ -1,5 +1,5 @@
 window.VISA_DATA = {
-  version: "0.5.3",
+  version: "0.5.4",
   generatedAt: "2026-06-27",
   reviewPolicy: {
     p0: "申根、美国、英国、加拿大每周复核官方来源。",
@@ -7,6 +7,12 @@ window.VISA_DATA = {
     p2: "eVisa 国家每月复核，用户生成清单当天做快速检查。"
   },
   iterations: [
+    {
+      version: "0.5.4",
+      date: "2026-07-15",
+      title: "Kiwi 打卡路线与循环动画",
+      detail: "访问页 Kiwi 起飞动画改为循环播放，护照视觉升级为更明显的照片质感护照卡片，办理流程改成 Kiwi 到每个站点打卡。"
+    },
     {
       version: "0.5.3",
       date: "2026-07-15",

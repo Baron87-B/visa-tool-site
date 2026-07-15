@@ -316,8 +316,16 @@
     });
     els.flowSteps.innerHTML = steps
       .map(
-        (step, index) => `<article class="flow-step ${step.status}" data-flow-tab="${step.tab}">
-          <div class="flow-step-index">${index + 1}</div>
+        (step, index) => `<article class="flow-step ${step.status}" data-flow-tab="${step.tab}" data-flow-station="${index + 1}">
+          <div class="flow-step-checkin">
+            <div class="flow-step-index">${index + 1}</div>
+            <div class="flow-station-kiwi" aria-hidden="true">
+              <span class="flow-station-body"></span>
+              <span class="flow-station-beak"></span>
+            </div>
+            <div class="flow-station-line"></div>
+            <span class="flow-stamp">${flowStampLabel(step.status)}</span>
+          </div>
           <div>
             <h3>${step.title}</h3>
             <p>${step.goal}</p>
@@ -342,6 +350,15 @@
       ready: "可开始",
       waiting: "待开始"
     }[status] || "待开始";
+  }
+
+  function flowStampLabel(status) {
+    return {
+      done: "已打卡",
+      in_progress: "当前站",
+      ready: "下一站",
+      waiting: "待出发"
+    }[status] || "待出发";
   }
 
   function renderTable() {
