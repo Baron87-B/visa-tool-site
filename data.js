@@ -1,5 +1,5 @@
 window.VISA_DATA = {
-  version: "0.5.4",
+  version: "0.5.5",
   generatedAt: "2026-06-27",
   reviewPolicy: {
     p0: "申根、美国、英国、加拿大每周复核官方来源。",
@@ -7,6 +7,12 @@ window.VISA_DATA = {
     p2: "eVisa 国家每月复核，用户生成清单当天做快速检查。"
   },
   iterations: [
+    {
+      version: "0.5.5",
+      date: "2026-07-15",
+      title: "案件删除",
+      detail: "我的案件列表新增删除按钮，删除前确认，删除当前案件后自动切换到下一个案件，并至少保留一个本机案件。"
+    },
     {
       version: "0.5.4",
       date: "2026-07-15",

@@ -44,6 +44,10 @@
     };
   }
 
+  function deleteCase(cases, caseId) {
+    return cases.filter((item) => item.id !== caseId);
+  }
+
   function readStoredCases() {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -70,5 +74,5 @@
       }));
   }
 
-  root.VISA_CASE_STORE = { loadCases, saveCases, createCase, updateCase };
+  root.VISA_CASE_STORE = { loadCases, saveCases, createCase, updateCase, deleteCase };
 })(typeof window !== "undefined" ? window : globalThis);

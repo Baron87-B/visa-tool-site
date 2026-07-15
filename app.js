@@ -161,10 +161,13 @@
     els.caseList.innerHTML = state.cases
       .map((caseItem) => {
         const active = caseItem.id === state.activeCaseId ? "active" : "";
-        return `<button class="case-button ${active}" data-case="${caseItem.id}">
-          <span class="case-name">${escapeHtml(caseItem.name)}</span>
-          <span class="case-meta">${escapeHtml(caseItem.meta)}</span>
-        </button>`;
+        return `<div class="case-row ${active}">
+          <button class="case-button ${active}" data-case="${caseItem.id}">
+            <span class="case-name">${escapeHtml(caseItem.name)}</span>
+            <span class="case-meta">${escapeHtml(caseItem.meta)}</span>
+          </button>
+          <button class="case-delete-button" type="button" data-delete-case="${caseItem.id}" aria-label="删除 ${escapeHtml(caseItem.name)}">删除</button>
+        </div>`;
       })
       .join("");
   }
@@ -235,6 +238,32 @@
     syncTimelineInputs();
     syncItineraryInputs();
     render();
+  }
+
+  function deleteCase(caseId) {
+    if (state.cases.length <= 1) {
+      showToast("至少保留一个案件");
+      return;
+    }
+    const caseItem = state.cases.find((item) => item.id === caseId);
+    if (!caseItem) return;
+    if (!window.confirm(`删除案件「${caseItem.name}」？此操作只会删除本机浏览器里的案件记录。`)) {
+      return;
+    }
+    const nextCases = window.VISA_CASE_STORE.deleteCase(state.cases, caseId);
+    const nextActiveCase = caseId === state.activeCaseId
+      ? nextCases[0]
+      : nextCases.find((item) => item.id === state.activeCaseId) || nextCases[0];
+    state.cases = nextCases;
+    state.activeCaseId = nextActiveCase.id;
+    state.destinationId = nextActiveCase.destinationId;
+    applyCaseSnapshot(nextActiveCase.snapshot || {});
+    window.VISA_CASE_STORE.saveCases(state.cases, state.activeCaseId);
+    syncProfileInputs();
+    syncTimelineInputs();
+    syncItineraryInputs();
+    render();
+    showToast("案件已删除");
   }
 
   function applyCaseSnapshot(snapshot) {
@@ -900,7 +929,13 @@
     const row = event.target.closest("[data-doc]");
     const inspectButton = event.target.closest("[data-inspect]");
     const flowAction = event.target.closest("[data-flow-action]");
+    const deleteCaseButton = event.target.closest("[data-delete-case]");
     const caseButton = event.target.closest("[data-case]");
+
+    if (deleteCaseButton) {
+      deleteCase(deleteCaseButton.dataset.deleteCase);
+      return;
+    }
 
     if (destinationButton) {
       setDestination(destinationButton.dataset.destination);
