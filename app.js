@@ -254,20 +254,8 @@
     showToast("新案件已创建并保存在本机");
   }
 
-  function findOrCreateCaseForDestination(destinationId) {
-    const existing = state.cases.find((item) => item.destinationId === destinationId);
-    if (existing) return existing;
-    const dest = data.destinations.find((item) => item.id === destinationId) || data.destinations[0];
-    const created = window.VISA_CASE_STORE.createCase({
-      destination: dest,
-      profileLabel: profileLabel(),
-      purposeLabel: casePurposeLabel(),
-      jurisdiction: dest.defaultJurisdiction,
-      snapshot: resetDestinationScopedState(destinationId)
-    });
-    state.cases = [created, ...state.cases];
-    window.VISA_CASE_STORE.saveCases(state.cases, created.id);
-    return created;
+  function findCaseForDestination(destinationId) {
+    return state.cases.find((item) => item.destinationId === destinationId) || null;
   }
 
   function resetDestinationScopedState(destinationId) {
@@ -362,8 +350,9 @@
 
   function renderHeader() {
     const dest = destination();
+    const activeCase = state.cases.find((item) => item.id === state.activeCaseId);
     els.caseTitle.textContent = `${dest.name}${state.purpose === "business" ? "商务" : state.purpose === "family_visit" ? "探亲访友" : "旅游"}签`;
-    els.caseMeta.textContent = `申请人：中国大陆普通护照 / ${profileLabel()} / ${dest.defaultJurisdiction}`;
+    els.caseMeta.textContent = `申请人：中国大陆普通护照 / ${profileLabel()} / ${dest.defaultJurisdiction}${activeCase ? "" : " / 未保存草稿"}`;
     els.lastChecked.textContent = `最后核验：${dest.lastChecked}`;
     els.jurisdictionSelect.innerHTML = dest.jurisdictions.map((item) => `<option>${item}</option>`).join("");
     els.jurisdictionSelect.value = state.jurisdiction || dest.defaultJurisdiction;
@@ -1252,14 +1241,25 @@
   function setDestination(id) {
     if (id === state.destinationId) return;
     saveActiveCase({ quiet: true });
-    const matchingCase = findOrCreateCaseForDestination(id);
-    if (!matchingCase.snapshot?.destinationId) {
-      matchingCase.snapshot = resetDestinationScopedState(id);
-      state.cases = state.cases.map((item) => (item.id === matchingCase.id ? matchingCase : item));
-      window.VISA_CASE_STORE.saveCases(state.cases, matchingCase.id);
+    const matchingCase = findCaseForDestination(id);
+    if (matchingCase) {
+      if (!matchingCase.snapshot?.destinationId) {
+        matchingCase.snapshot = resetDestinationScopedState(id);
+        state.cases = state.cases.map((item) => (item.id === matchingCase.id ? matchingCase : item));
+        window.VISA_CASE_STORE.saveCases(state.cases, matchingCase.id);
+      }
+      setActiveCase(matchingCase.id);
+      showToast(`已切换到${matchingCase.name}`);
+      return;
     }
-    setActiveCase(matchingCase.id);
-    showToast(`已切换到${matchingCase.name}`);
+    state.activeCaseId = "";
+    state.destinationId = id;
+    applyCaseSnapshot(resetDestinationScopedState(id));
+    syncProfileInputs();
+    syncTimelineInputs();
+    syncItineraryInputs();
+    render();
+    showToast("已切换到未保存草稿。切换目的地不会自动新建案件，请点“新建”保存。");
   }
 
   document.addEventListener("click", (event) => {
