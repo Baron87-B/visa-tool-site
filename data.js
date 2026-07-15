@@ -1,5 +1,5 @@
 window.VISA_DATA = {
-  version: "0.5.9",
+  version: "0.6.0",
   generatedAt: "2026-06-27",
   reviewPolicy: {
     p0: "申根、美国、英国、加拿大每周复核官方来源。",
@@ -7,6 +7,12 @@ window.VISA_DATA = {
     p2: "eVisa 国家每月复核，用户生成清单当天做快速检查。"
   },
   iterations: [
+    {
+      version: "0.6.0",
+      date: "2026-07-15",
+      title: "模板库与官方表格",
+      detail: "新增官方表格入口与可填写资料准备模板，资料详情可打开官网或下载模板；生成本地资料夹时同步写入 README、准备模板和官方链接说明文件，不再只是空目录。"
+    },
     {
       version: "0.5.9",
       date: "2026-07-15",
@@ -98,7 +104,7 @@ window.VISA_DATA = {
       detail: "覆盖 10 个高频目的地，建立材料类别、适用画像、官方来源和资料夹结构。"
     },
     {
-      version: "0.6.0",
+      version: "0.7.0",
       date: "计划中",
       title: "材料体检与风险提示",
       detail: "检查资料完整度、日期一致性、资金/工作材料合理性，并生成递签前风险提示。"
@@ -498,6 +504,206 @@ window.VISA_DATA = {
       documents: ["passport", "passport_bio_scan", "photo", "travel_insurance_support", "entry_exit_plan", "payment_receipt"]
     }
   ],
+  templateLibrary: {
+    officialForms: {
+      schengen_application_form: {
+        kind: "official_link",
+        title: "申根统一签证申请表 PDF",
+        url: "https://home-affairs.ec.europa.eu/document/download/5fe79baa-2d46-4b65-84ec-ea2e9b5ab1d6_en?filename=Visa+Application+Form.pdf",
+        sourceName: "European Commission",
+        note: "官方免费申请表。填写内容需与护照、行程、住宿、保险和资金材料一致。"
+      },
+      ds160_online: {
+        kind: "official_link",
+        title: "DS-160 在线申请入口",
+        url: "https://ceac.state.gov/genniv/",
+        sourceName: "U.S. Department of State CEAC",
+        note: "DS-160 为在线会话表格，提交后打印确认页；不要用离线仿制表替代。"
+      },
+      uk_standard_visitor_online: {
+        kind: "official_link",
+        title: "英国 Standard Visitor 官方申请入口",
+        url: "https://www.gov.uk/standard-visitor/apply-standard-visitor-visa",
+        sourceName: "GOV.UK",
+        note: "英国表格按答案动态生成问题，本工具只生成填写前准备表。"
+      },
+      canada_visitor_online: {
+        kind: "official_link",
+        title: "加拿大 Visitor Visa 官方申请入口",
+        url: "https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada/apply-visitor-visa.html",
+        sourceName: "IRCC",
+        note: "IRCC 账户会按问卷生成个人化材料清单，以账户内最终清单为准。"
+      },
+      australia_600_online: {
+        kind: "official_link",
+        title: "澳大利亚 Visitor 600 官方说明",
+        url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600/tourist-stream-overseas",
+        sourceName: "Australian Department of Home Affairs",
+        note: "通常通过 ImmiAccount 在线填写，字段会按答案动态调整。"
+      },
+      new_zealand_visitor_online: {
+        kind: "official_link",
+        title: "新西兰 Visitor Visa 官方说明",
+        url: "https://www.immigration.govt.nz/visas/visitor-visa/",
+        sourceName: "Immigration New Zealand",
+        note: "在线申请问题按停留期、访问目的和家庭情况变化。"
+      },
+      japan_application_form_cn: {
+        kind: "official_link",
+        title: "日本签证申请表（简体中文 PDF）",
+        url: "https://www.mofa.go.jp/files/000124527.pdf",
+        sourceName: "Ministry of Foreign Affairs of Japan",
+        note: "MOFA 官方申请表，填写后按使领馆或机构要求提交。"
+      },
+      japan_guarantee_letter: {
+        kind: "official_link",
+        title: "日本身元保证书 PDF",
+        url: "https://www.mofa.go.jp/files/000262545.pdf",
+        sourceName: "Ministry of Foreign Affairs of Japan",
+        note: "探亲、访友、商务等有保证人场景按要求使用。"
+      },
+      japan_itinerary_form: {
+        kind: "official_link",
+        title: "日本滞在预定表 PDF",
+        url: "https://www.mofa.go.jp/files/000262548.pdf",
+        sourceName: "Ministry of Foreign Affairs of Japan",
+        note: "用于列明在日期间安排，需与机票、酒店和申请表一致。"
+      },
+      korea_visa_portal: {
+        kind: "official_link",
+        title: "韩国签证门户官方入口",
+        url: "https://www.visa.go.kr/openPage.do?MENU_ID=10102",
+        sourceName: "Korea Visa Portal",
+        note: "韩国领区要求差异较大，下载表格和预约入口以官方门户及领馆页面为准。"
+      },
+      vietnam_evisa_online: {
+        kind: "official_link",
+        title: "越南 eVisa 官方入口",
+        url: "https://evisa.xuatnhapcanh.gov.vn/trang-chu-ttdt",
+        sourceName: "Vietnam Immigration Department",
+        note: "在线填写护照、照片、口岸和停留信息，口岸选择需准确。"
+      },
+      russia_evisa_online: {
+        kind: "official_link",
+        title: "俄罗斯统一电子签证官方入口",
+        url: "https://evisa.kdmid.ru/",
+        sourceName: "Russian Federation eVisa",
+        note: "在线填写，停留天数、照片和旅行路线需按官网规则核对。"
+      }
+    },
+    preparationTemplates: {
+      employment_letter_cn: {
+        kind: "template",
+        title: "在职证明模板",
+        filename: "模板_在职证明.md",
+        content: "# 在职证明\n\n致签证官：\n\n兹证明【申请人姓名】为我司正式员工，护照号码【护照号码】，身份证号码【身份证号码】。\n\n任职部门：【部门】\n职位：【职位】\n入职日期：【YYYY-MM-DD】\n月收入：【人民币金额】\n\n我司同意其于【出发日期】至【返回日期】期间前往【目的地】旅游/访问，并确认其旅行结束后将按期返回继续任职。\n\n公司名称：【公司全称】\n公司地址：【公司地址】\n联系人：【HR/负责人姓名】\n联系电话：【电话】\n\n公司盖章：\n日期：【YYYY-MM-DD】\n\n提示：请使用真实公司信息，由公司确认后盖章/签字；不要伪造工作关系。"
+      },
+      student_certificate_cn: {
+        kind: "template",
+        title: "在读证明/准假说明模板",
+        filename: "模板_在读证明.md",
+        content: "# 在读证明\n\n兹证明【申请人姓名】为我校【学院/年级/专业】学生，学号【学号】。\n\n计划于【出发日期】至【返回日期】前往【目的地】旅游/访问，学校知悉其假期或请假安排。\n\n学校名称：【学校全称】\n联系人：【老师/办公室】\n电话：【电话】\n\n盖章/签字：\n日期：【YYYY-MM-DD】"
+      },
+      itinerary_csv: {
+        kind: "template",
+        title: "旅行计划单模板",
+        filename: "模板_旅行计划单.csv",
+        content: "日期,城市,行程安排,酒店名称,酒店地址,交通/航班,备注\nYYYY-MM-DD,城市名,上午/下午主要安排,真实酒店名称,完整地址,航班或火车,需与申请表一致\n"
+      },
+      accommodation_verification_csv: {
+        kind: "template",
+        title: "住宿地址核对表",
+        filename: "模板_住宿地址核对表.csv",
+        content: "城市,入住日期,退房日期,酒店/住宿名称,完整地址,预订平台/确认号,地图是否核对,是否可取消,备注\n马德里,YYYY-MM-DD,YYYY-MM-DD,真实酒店名称,完整地址,Booking/酒店官网,是/否,是/否,不要填写虚构地址\n"
+      },
+      funds_explanation_cn: {
+        kind: "template",
+        title: "资金说明/大额转入说明模板",
+        filename: "模板_资金说明.md",
+        content: "# 资金说明\n\n申请人：【姓名】\n旅行目的地：【目的地】\n预计旅行日期：【日期】\n\n资金来源说明：\n- 工资收入：【说明工资入账规律】\n- 储蓄余额：【说明余额来源】\n- 大额转入：【如有，说明来源、日期、金额和证明文件】\n\n声明：以上说明基于本人真实资金情况，相关流水和证明文件真实有效。\n\n签名：\n日期："
+      },
+      invitation_info_cn: {
+        kind: "template",
+        title: "邀请函信息准备表",
+        filename: "模板_邀请函信息准备表.md",
+        content: "# 邀请函信息准备表\n\n邀请人/机构：【姓名或机构名称】\n邀请人身份：【公民/居民/公司/会议方】\n联系方式：【电话、邮箱】\n地址：【完整地址】\n与申请人关系：【关系】\n邀请时间：【起止日期】\n费用承担：【申请人/邀请人/公司】\n住宿安排：【酒店/邀请人住址】\n\n提示：邀请函应由真实邀请人或机构出具，不要代签或伪造。"
+      },
+      ds160_prep_csv: {
+        kind: "template",
+        title: "DS-160 填写准备表",
+        filename: "模板_DS160填写准备表.csv",
+        content: "模块,字段,我的填写内容,核对材料,备注\nGetting Started,申请地点,,预约城市/使领馆,\nPersonal,中文姓名,,护照/身份证,\nPassport,护照号码,,护照资料页,\nTravel,赴美目的,,行程/邀请,\nU.S. Contact,美国联系人/酒店,,酒店或邀请人,\nWork/Education,当前工作信息,,在职证明/营业材料,\nSecurity,安全背景问题,,如实回答,\n"
+      },
+      official_form_prep_csv: {
+        kind: "template",
+        title: "官网表格字段准备表",
+        filename: "模板_官网表格字段准备表.csv",
+        content: "官网字段,中文含义,我的填写内容,对应材料,复核状态\nSurname/Family name,姓,,护照,待核对\nGiven name,名,,护照,待核对\nTravel dates,旅行日期,,机票/酒店/保险,待核对\nAccommodation address,住宿地址,,酒店订单/地图核对,待核对\nFunding,费用承担,,银行流水/在职证明,待核对\n"
+      },
+      document_handover_checklist: {
+        kind: "template",
+        title: "材料交接清单",
+        filename: "模板_材料交接清单.md",
+        content: "# 材料交接清单\n\n- [ ] 护照原件\n- [ ] 护照资料页复印件/扫描件\n- [ ] 签证照片\n- [ ] 官方申请表/确认页\n- [ ] 预约确认/缴费回执\n- [ ] 行程计划\n- [ ] 机票预订单\n- [ ] 酒店/住宿证明\n- [ ] 保险保单\n- [ ] 银行流水/资金证明\n- [ ] 在职/在读/退休证明\n- [ ] 邀请函及邀请人材料（如适用）\n\n备注：交接给机构或同行前，确认文件均为真实材料，且敏感证件副本已加用途水印。"
+      }
+    },
+    documentTemplates: {
+      application_form: ["official_form_prep_csv"],
+      uk_application_form: ["official_form_prep_csv"],
+      canada_forms: ["official_form_prep_csv"],
+      ds160_confirmation: ["ds160_prep_csv"],
+      itinerary: ["itinerary_csv"],
+      entry_exit_plan: ["itinerary_csv"],
+      accommodation: ["accommodation_verification_csv"],
+      accommodation_support: ["accommodation_verification_csv"],
+      bank_statement: ["funds_explanation_cn"],
+      bank_statement_support: ["funds_explanation_cn"],
+      employment_letter: ["employment_letter_cn"],
+      employment_letter_support: ["employment_letter_cn"],
+      student_certificate: ["student_certificate_cn"],
+      invitation_letter: ["invitation_info_cn"],
+      business_invitation: ["invitation_info_cn"],
+      host_id_or_residence: ["invitation_info_cn"],
+      agent_submission_packet: ["document_handover_checklist"]
+    },
+    destinationTemplates: {
+      "schengen-spain": {
+        application_form: ["schengen_application_form"],
+        itinerary: ["official_form_prep_csv"],
+        accommodation: ["official_form_prep_csv"]
+      },
+      "us-b1b2": {
+        ds160_confirmation: ["ds160_online"],
+        photo_us: ["official_form_prep_csv"]
+      },
+      "uk-standard-visitor": {
+        uk_application_form: ["uk_standard_visitor_online"]
+      },
+      "canada-visitor": {
+        canada_forms: ["canada_visitor_online"]
+      },
+      "australia-600": {
+        application_form: ["australia_600_online"]
+      },
+      "new-zealand-visitor": {
+        application_form: ["new_zealand_visitor_online"]
+      },
+      "japan-short": {
+        application_form: ["japan_application_form_cn"],
+        invitation_letter: ["japan_guarantee_letter"],
+        itinerary: ["japan_itinerary_form"]
+      },
+      "korea-c3": {
+        application_form: ["korea_visa_portal"]
+      },
+      "vietnam-evisa": {
+        application_form: ["vietnam_evisa_online"]
+      },
+      "russia-evisa": {
+        application_form: ["russia_evisa_online"]
+      }
+    }
+  },
   documentRules: {
     passport: {
       name: "有效护照",

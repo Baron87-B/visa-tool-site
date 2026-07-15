@@ -119,6 +119,39 @@
     return dest.documents.map((id) => ({ id, ...docRule(id) })).filter(Boolean).map(applyDynamicType);
   }
 
+  function templateLibrary() {
+    return data.templateLibrary || { officialForms: {}, preparationTemplates: {}, documentTemplates: {}, destinationTemplates: {} };
+  }
+
+  function templatesForDocument(docId) {
+    const library = templateLibrary();
+    const generalIds = library.documentTemplates?.[docId] || [];
+    const destinationIds = library.destinationTemplates?.[state.destinationId]?.[docId] || [];
+    const seen = new Set();
+    return [...destinationIds, ...generalIds]
+      .filter((id) => {
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .map((id) => {
+        const official = library.officialForms?.[id];
+        if (official) return { id, kind: "official_link", ...official };
+        const template = library.preparationTemplates?.[id];
+        if (template) return { id, kind: "template", ...template };
+        return null;
+      })
+      .filter(Boolean);
+  }
+
+  function templatesByDocId(docs) {
+    return docs.reduce((memo, doc) => {
+      const templates = templatesForDocument(doc.id);
+      if (templates.length) memo[doc.id] = templates;
+      return memo;
+    }, {});
+  }
+
   function applyDynamicType(doc) {
     const next = { ...doc };
     const profileMatches = {
@@ -526,20 +559,55 @@
         <h3>模板槽位</h3>
         <p class="muted">${doc.template || "暂无模板"}</p>
       </div>
+      ${renderDocumentTemplates(doc)}
       <div class="detail-section">
         <h3>官方来源</h3>
         ${sources}
       </div>`;
   }
 
+  function renderDocumentTemplates(doc) {
+    const templates = templatesForDocument(doc.id);
+    if (!templates.length) {
+      return `<div class="detail-section">
+        <h3>模板与官方表格</h3>
+        <p class="muted">当前资料项暂无专用模板；请按官方来源和资料夹说明准备真实材料。</p>
+      </div>`;
+    }
+    return `<div class="detail-section">
+      <h3>模板与官方表格</h3>
+      <div class="template-list">
+        ${templates.map((template) => renderTemplateCard(doc, template)).join("")}
+      </div>
+    </div>`;
+  }
+
+  function renderTemplateCard(doc, template) {
+    const isOfficial = template.kind === "official_link";
+    return `<article class="template-card ${isOfficial ? "official" : "prepared"}">
+      <div>
+        <span class="template-kind">${isOfficial ? "官方表格" : "可填写模板"}</span>
+        <strong>${escapeHtml(template.title || doc.name)}</strong>
+        <p>${escapeHtml(template.note || (isOfficial ? "在官方网站填写、下载或核对，表格要求以官网为准。" : "下载后替换为真实信息，可放入对应资料夹。"))}</p>
+      </div>
+      ${
+        isOfficial
+          ? `<a class="secondary-button compact-button" href="${escapeHtml(template.url)}" target="_blank" rel="noreferrer">打开官方</a>`
+          : `<button class="secondary-button compact-button" type="button" data-download-template="${escapeHtml(template.id)}" data-template-doc="${escapeHtml(doc.id)}">下载模板</button>`
+      }
+    </article>`;
+  }
+
   function renderFolders() {
     const dest = destination();
     const docs = visibleDocuments().filter((doc) => doc.type !== "low_value");
+    const documentTemplates = templatesByDocId(docs);
     const plan = window.VISA_FOLDER_ENGINE.buildFolderPlan({
       destinationShortName: dest.shortName,
       visaType: dest.visaType,
       profileLabel: profileLabel(),
-      documents: docs
+      documents: docs,
+      templatesByDocId: documentTemplates
     });
     state.folderPlan = plan;
     els.folderTree.textContent = plan.tree;
@@ -547,7 +615,7 @@
     els.folderDocumentMap.innerHTML = renderFolderDocumentMap(plan);
     const canCreate = window.VISA_FOLDER_ENGINE.canCreateLocalFolders(window);
     els.folderStatus.innerHTML = `<strong>${plan.root}</strong>
-      <span>${plan.folders.length} 个资料夹，${Object.keys(plan.documentLocations).length} 项资料已建立对应关系。${canCreate ? "可选择案件资料夹扫描文件，系统只判断是否放入文件，不判断内容真实性。" : "当前浏览器不支持直接扫描或创建，可下载脚本或复制命令。"}</span>`;
+      <span>${plan.folders.length} 个资料夹，${Object.keys(plan.documentLocations).length} 项资料已建立对应关系，${plan.templateFiles.length} 个模板/说明文件。${canCreate ? "可选择案件资料夹扫描文件，系统只判断是否放入文件，不判断内容真实性。" : "当前浏览器不支持直接扫描或创建，可下载脚本或复制命令。"}</span>`;
   }
 
   function renderFolderDocumentMap(plan) {
@@ -570,10 +638,11 @@
   function renderFolderDocItem(location) {
     const scan = state.folderScan?.[location.docId];
     const status = state.statuses[location.docId] || "pending";
+    const templateCount = templatesForDocument(location.docId).length;
     return `<button class="folder-doc-item ${status}" type="button" data-folder-doc="${location.docId}">
       <span>
         <strong>${escapeHtml(location.name)}</strong>
-        <small>${escapeHtml(location.template || "资料文件")} · ${escapeHtml(folderScanLabel(scan))}</small>
+        <small>${escapeHtml(location.template || "资料文件")} · ${templateCount} 个模板/官方表格 · ${escapeHtml(folderScanLabel(scan))}</small>
       </span>
       <em>${escapeHtml(documentStatusLabel(status))}</em>
     </button>`;
@@ -1275,9 +1344,14 @@
     const removeCityButton = event.target.closest("[data-remove-city]");
     const goFolderButton = event.target.closest("[data-go-folder]");
     const folderDocButton = event.target.closest("[data-folder-doc]");
+    const downloadTemplateButton = event.target.closest("[data-download-template]");
 
     if (deleteCaseButton) {
       deleteCase(deleteCaseButton.dataset.deleteCase);
+      return;
+    }
+    if (downloadTemplateButton) {
+      downloadDocumentTemplate(downloadTemplateButton.dataset.templateDoc, downloadTemplateButton.dataset.downloadTemplate);
       return;
     }
     if (addCityButton) {
@@ -1494,7 +1568,7 @@
     }
     try {
       const result = await window.VISA_FOLDER_ENGINE.createLocalFolders(state.folderPlan, window);
-      showToast(`已创建 ${result.count} 个资料夹`);
+      showToast(`已创建 ${result.count} 个资料夹和 ${result.fileCount || 0} 个模板文件`);
     } catch (error) {
       showToast(error.name === "AbortError" ? "已取消选择目录" : "资料夹创建失败");
     }
@@ -1609,6 +1683,24 @@
 
   function csvCell(value) {
     return `"${String(value).replaceAll('"', '""')}"`;
+  }
+
+  function downloadDocumentTemplate(docId, templateId) {
+    const doc = visibleDocuments().find((item) => item.id === docId);
+    const template = templatesForDocument(docId).find((item) => item.id === templateId);
+    if (!doc || !template) {
+      showToast("没有找到对应模板");
+      return;
+    }
+    const filename = template.filename || `模板_${doc.name}.md`;
+    const blob = new Blob([template.content || ""], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("模板已下载");
   }
 
   document.getElementById("reviewCycleButton").addEventListener("click", () => {

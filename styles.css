@@ -1074,6 +1074,51 @@ tbody tr.selected {
   font-size: 12px;
 }
 
+.template-list {
+  display: grid;
+  gap: 10px;
+}
+
+.template-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.template-card.official {
+  border-color: #b8d4ff;
+  background: #f6f9ff;
+}
+
+.template-card strong,
+.template-card p,
+.template-kind {
+  display: block;
+}
+
+.template-card strong {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.template-card p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.template-kind {
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .panel-heading {
   padding: 16px;
   border-bottom: 1px solid var(--line);
