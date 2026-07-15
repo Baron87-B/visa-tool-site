@@ -1,5 +1,5 @@
 window.VISA_DATA = {
-  version: "0.5.5",
+  version: "0.5.6",
   generatedAt: "2026-06-27",
   reviewPolicy: {
     p0: "申根、美国、英国、加拿大每周复核官方来源。",
@@ -7,6 +7,12 @@ window.VISA_DATA = {
     p2: "eVisa 国家每月复核，用户生成清单当天做快速检查。"
   },
   iterations: [
+    {
+      version: "0.5.6",
+      date: "2026-07-15",
+      title: "目的地、案件与行程状态同步",
+      detail: "修复选择目的地后我的案件仍停留在其他国家、行程草稿复用旧目的地的问题。行程缓存改为按目的地隔离，切换目的地会自动切换或创建对应案件。"
+    },
     {
       version: "0.5.5",
       date: "2026-07-15",

@@ -8,9 +8,10 @@
   };
   const initialCaseData = window.VISA_CASE_STORE.loadCases(data.destinations);
   const initialSnapshot = initialCaseData.activeCase?.snapshot || {};
+  const initialDestinationId = initialCaseData.activeCase?.destinationId || "schengen-spain";
 
   const state = {
-    destinationId: initialCaseData.activeCase?.destinationId || "schengen-spain",
+    destinationId: initialDestinationId,
     profile: initialSnapshot.profile || "employed",
     purpose: initialSnapshot.purpose || "tourism",
     party: initialSnapshot.party || "solo",
@@ -24,7 +25,7 @@
     activeCaseId: initialCaseData.activeCase?.id || "",
     statuses: initialSnapshot.statuses || {},
     formFieldValues: initialSnapshot.formFieldValues || loadFormFieldValues(),
-    itinerary: initialSnapshot.itinerary || loadItineraryValues(),
+    itinerary: itineraryForSnapshot(initialSnapshot, initialDestinationId),
     timeline: initialSnapshot.timeline || loadTimelineValues(),
     folderPlan: null,
     watermark: {
@@ -227,6 +228,41 @@
     showToast("新案件已创建并保存在本机");
   }
 
+  function findOrCreateCaseForDestination(destinationId) {
+    const existing = state.cases.find((item) => item.destinationId === destinationId);
+    if (existing) return existing;
+    const dest = data.destinations.find((item) => item.id === destinationId) || data.destinations[0];
+    const created = window.VISA_CASE_STORE.createCase({
+      destination: dest,
+      profileLabel: profileLabel(),
+      purposeLabel: casePurposeLabel(),
+      jurisdiction: dest.defaultJurisdiction,
+      snapshot: resetDestinationScopedState(destinationId)
+    });
+    state.cases = [created, ...state.cases];
+    window.VISA_CASE_STORE.saveCases(state.cases, created.id);
+    return created;
+  }
+
+  function resetDestinationScopedState(destinationId) {
+    const dest = data.destinations.find((item) => item.id === destinationId) || data.destinations[0];
+    return {
+      destinationId,
+      profile: state.profile,
+      purpose: state.purpose,
+      party: state.party,
+      income: state.income,
+      invitation: state.invitation,
+      jurisdiction: dest.defaultJurisdiction,
+      filter: "all",
+      selectedDocId: "",
+      statuses: {},
+      formFieldValues: state.formFieldValues,
+      itinerary: loadItineraryValues(destinationId),
+      timeline: state.timeline
+    };
+  }
+
   function setActiveCase(caseId) {
     const caseItem = state.cases.find((item) => item.id === caseId);
     if (!caseItem) return;
@@ -277,8 +313,15 @@
     state.selectedDocId = snapshot.selectedDocId || "";
     state.statuses = snapshot.statuses || {};
     state.formFieldValues = snapshot.formFieldValues || loadFormFieldValues();
-    state.itinerary = snapshot.itinerary || loadItineraryValues();
+    state.itinerary = itineraryForSnapshot(snapshot, state.destinationId);
     state.timeline = snapshot.timeline || loadTimelineValues();
+  }
+
+  function itineraryForSnapshot(snapshot, destinationId) {
+    if (snapshot.itinerary?.destinationId === destinationId) {
+      return snapshot.itinerary;
+    }
+    return loadItineraryValues(destinationId);
   }
 
   function syncProfileInputs() {
@@ -627,25 +670,42 @@
       .join("");
   }
 
-  function loadItineraryValues() {
-    const fallback = {
+  function defaultItineraryValues(destinationId) {
+    const destinationDefaults = {
+      "schengen-spain": "马德里 | 2 | Hotel Madrid Centro | Calle Mayor 1, Madrid\n巴塞罗那 | 2 | Hotel Barcelona Port | La Rambla 2, Barcelona",
+      "us-b1b2": "纽约 | 3 | Midtown Hotel | 5th Avenue, New York\n洛杉矶 | 2 | Downtown Hotel | South Grand Avenue, Los Angeles",
+      "uk-standard-visitor": "伦敦 | 4 | London Central Hotel | Strand, London",
+      "canada-visitor": "温哥华 | 2 | Vancouver Downtown Hotel | Robson Street, Vancouver\n多伦多 | 3 | Toronto Centre Hotel | King Street, Toronto",
+      "australia-600": "悉尼 | 3 | Sydney Harbour Hotel | George Street, Sydney\n墨尔本 | 2 | Melbourne Central Hotel | Swanston Street, Melbourne",
+      "new-zealand-visitor": "奥克兰 | 2 | Auckland City Hotel | Queen Street, Auckland\n皇后镇 | 3 | Queenstown Lake Hotel | Lake Esplanade, Queenstown",
+      "japan-short": "东京 | 3 | Tokyo Station Hotel | Marunouchi, Tokyo\n大阪 | 2 | Osaka Namba Hotel | Namba, Osaka",
+      "korea-c3": "首尔 | 4 | Seoul Myeongdong Hotel | Myeongdong, Seoul",
+      "vietnam-evisa": "河内 | 2 | Hanoi Old Quarter Hotel | Hoan Kiem, Hanoi\n胡志明市 | 2 | Saigon Central Hotel | District 1, Ho Chi Minh City",
+      "russia-evisa": "莫斯科 | 3 | Moscow Centre Hotel | Tverskaya Street, Moscow\n圣彼得堡 | 2 | Nevsky Hotel | Nevsky Prospekt, Saint Petersburg"
+    };
+    return {
+      destinationId,
       startDate: "2026-10-01",
       originCity: "上海",
       returnCity: "上海",
       pace: "normal",
       inboundFlight: "",
       outboundFlight: "",
-      citiesText: "马德里 | 2 | Hotel Madrid Centro | Calle Mayor 1, Madrid\n巴塞罗那 | 2 | Hotel Barcelona Port | La Rambla 2, Barcelona"
+      citiesText: destinationDefaults[destinationId] || ""
     };
+  }
+
+  function loadItineraryValues(destinationId = state.destinationId) {
+    const fallback = defaultItineraryValues(destinationId);
     try {
-      return { ...fallback, ...JSON.parse(localStorage.getItem("visaTool.itineraryValues") || "{}") };
+      return { ...fallback, ...JSON.parse(localStorage.getItem(`visaTool.itineraryValues.${destinationId}`) || "{}"), destinationId };
     } catch {
       return fallback;
     }
   }
 
   function saveItineraryValues() {
-    localStorage.setItem("visaTool.itineraryValues", JSON.stringify(state.itinerary));
+    localStorage.setItem(`visaTool.itineraryValues.${state.destinationId}`, JSON.stringify({ ...state.itinerary, destinationId: state.destinationId }));
   }
 
   function syncItineraryInputs() {
@@ -660,6 +720,7 @@
 
   function readItineraryInputs() {
     state.itinerary = {
+      destinationId: state.destinationId,
       startDate: els.itineraryStartDate.value,
       originCity: els.itineraryOriginCity.value.trim(),
       returnCity: els.itineraryReturnCity.value.trim(),
@@ -914,12 +975,16 @@
   }
 
   function setDestination(id) {
-    state.destinationId = id;
-    const dest = destination();
-    state.jurisdiction = dest.defaultJurisdiction;
-    state.selectedDocId = "";
-    state.filter = "all";
-    render();
+    if (id === state.destinationId) return;
+    saveActiveCase({ quiet: true });
+    const matchingCase = findOrCreateCaseForDestination(id);
+    if (!matchingCase.snapshot?.destinationId) {
+      matchingCase.snapshot = resetDestinationScopedState(id);
+      state.cases = state.cases.map((item) => (item.id === matchingCase.id ? matchingCase : item));
+      window.VISA_CASE_STORE.saveCases(state.cases, matchingCase.id);
+    }
+    setActiveCase(matchingCase.id);
+    showToast(`已切换到${matchingCase.name}`);
   }
 
   document.addEventListener("click", (event) => {
