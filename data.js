@@ -1,5 +1,5 @@
 window.VISA_DATA = {
-  version: "0.5.1",
+  version: "0.5.2",
   generatedAt: "2026-06-27",
   reviewPolicy: {
     p0: "申根、美国、英国、加拿大每周复核官方来源。",
@@ -7,6 +7,12 @@ window.VISA_DATA = {
     p2: "eVisa 国家每月复核，用户生成清单当天做快速检查。"
   },
   iterations: [
+    {
+      version: "0.5.2",
+      date: "2026-07-15",
+      title: "Kiwi 品牌口号",
+      detail: "在访问页和工作台品牌区加入“不会飞的 Kiwi，也可以找到起飞的方法”和英文口号，明确从签证到行程的产品精神。"
+    },
     {
       version: "0.5.1",
       date: "2026-07-15",
