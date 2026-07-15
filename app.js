@@ -45,6 +45,7 @@
     cases: initialCaseData.cases,
     activeCaseId: initialCaseData.activeCase?.id || "",
     statuses: initialSnapshot.statuses || {},
+    folderScan: initialSnapshot.folderScan || {},
     formFieldValues: initialSnapshot.formFieldValues || loadFormFieldValues(),
     itinerary: itineraryForSnapshot(initialSnapshot, initialDestinationId),
     timeline: initialSnapshot.timeline || loadTimelineValues(),
@@ -81,6 +82,7 @@
     documentTable: document.getElementById("documentTable"),
     inspector: document.getElementById("documentInspector"),
     folderTree: document.getElementById("folderTree"),
+    folderDocumentMap: document.getElementById("folderDocumentMap"),
     mkdirCommand: document.getElementById("mkdirCommand"),
     folderStatus: document.getElementById("folderStatus"),
     sourceList: document.getElementById("sourceList"),
@@ -216,6 +218,7 @@
       filter: state.filter,
       selectedDocId: state.selectedDocId,
       statuses: state.statuses,
+      folderScan: state.folderScan,
       formFieldValues: state.formFieldValues,
       itinerary: state.itinerary,
       timeline: state.timeline
@@ -280,6 +283,7 @@
       filter: "all",
       selectedDocId: "",
       statuses: {},
+      folderScan: {},
       formFieldValues: state.formFieldValues,
       itinerary: loadItineraryValues(destinationId),
       timeline: state.timeline
@@ -335,6 +339,7 @@
     state.filter = snapshot.filter || "all";
     state.selectedDocId = snapshot.selectedDocId || "";
     state.statuses = snapshot.statuses || {};
+    state.folderScan = snapshot.folderScan || {};
     state.formFieldValues = snapshot.formFieldValues || loadFormFieldValues();
     state.itinerary = itineraryForSnapshot(snapshot, state.destinationId);
     state.timeline = snapshot.timeline || loadTimelineValues();
@@ -466,22 +471,30 @@
       .map((doc, index) => {
         const selected = doc.id === state.selectedDocId ? "selected" : "";
         const status = state.statuses[doc.id] || "pending";
+        const location = state.folderPlan?.documentLocations?.[doc.id];
+        const scan = state.folderScan?.[doc.id];
         return `<tr class="${selected}" data-doc="${doc.id}">
           <td class="col-index">${index + 1}</td>
           <td>
             <div class="doc-name">${doc.name}</div>
             <div class="doc-note">${doc.summary}</div>
+            ${location ? `<div class="doc-folder-link">资料夹：${escapeHtml(location.folder)}${scan?.fileCount ? ` · 检测到 ${scan.fileCount} 个文件` : ""}</div>` : ""}
           </td>
           <td><span class="badge ${doc.type}">${labels[doc.type]}</span></td>
           <td>
             <select class="status-select" data-status-doc="${doc.id}">
               <option value="pending" ${status === "pending" ? "selected" : ""}>未开始</option>
               <option value="uploading" ${status === "uploading" ? "selected" : ""}>待上传</option>
+              <option value="detected" ${status === "detected" ? "selected" : ""}>已检测到文件</option>
+              <option value="review" ${status === "review" ? "selected" : ""}>需要复核</option>
               <option value="done" ${status === "done" ? "selected" : ""}>已完成</option>
               <option value="not_applicable" ${status === "not_applicable" ? "selected" : ""}>不适用</option>
             </select>
           </td>
-          <td><div class="doc-actions"><button data-inspect="${doc.id}">查看</button></div></td>
+          <td><div class="doc-actions">
+            <button data-inspect="${doc.id}">查看</button>
+            ${location ? `<button data-go-folder="${doc.id}">资料夹</button>` : ""}
+          </div></td>
         </tr>`;
       })
       .join("");
@@ -518,6 +531,7 @@
       <div class="detail-section">
         <h3>资料夹位置</h3>
         <p class="muted">${doc.folder}</p>
+        <button class="secondary-button compact-button" data-go-folder="${doc.id}">跳到资料夹</button>
       </div>
       <div class="detail-section">
         <h3>模板槽位</h3>
@@ -541,9 +555,56 @@
     state.folderPlan = plan;
     els.folderTree.textContent = plan.tree;
     els.mkdirCommand.value = plan.mkdirCommand;
+    els.folderDocumentMap.innerHTML = renderFolderDocumentMap(plan);
     const canCreate = window.VISA_FOLDER_ENGINE.canCreateLocalFolders(window);
     els.folderStatus.innerHTML = `<strong>${plan.root}</strong>
-      <span>${plan.folders.length} 个资料夹。${canCreate ? "当前浏览器支持直接选择本机目录创建。" : "当前浏览器不支持直接创建，可下载脚本或复制命令。"}</span>`;
+      <span>${plan.folders.length} 个资料夹，${Object.keys(plan.documentLocations).length} 项资料已建立对应关系。${canCreate ? "可选择案件资料夹扫描文件，系统只判断是否放入文件，不判断内容真实性。" : "当前浏览器不支持直接扫描或创建，可下载脚本或复制命令。"}</span>`;
+  }
+
+  function renderFolderDocumentMap(plan) {
+    return plan.folders
+      .map((folder) => {
+        const docs = plan.folderDocuments[folder] || [];
+        return `<section class="folder-map-card" data-folder-name="${escapeHtml(folder)}">
+          <div class="folder-map-head">
+            <strong>${escapeHtml(folder)}</strong>
+            <span>${docs.length} 项资料</span>
+          </div>
+          <div class="folder-doc-list">
+            ${docs.map((location) => renderFolderDocItem(location)).join("")}
+          </div>
+        </section>`;
+      })
+      .join("");
+  }
+
+  function renderFolderDocItem(location) {
+    const scan = state.folderScan?.[location.docId];
+    const status = state.statuses[location.docId] || "pending";
+    return `<button class="folder-doc-item ${status}" type="button" data-folder-doc="${location.docId}">
+      <span>
+        <strong>${escapeHtml(location.name)}</strong>
+        <small>${escapeHtml(location.template || "资料文件")} · ${escapeHtml(folderScanLabel(scan))}</small>
+      </span>
+      <em>${escapeHtml(documentStatusLabel(status))}</em>
+    </button>`;
+  }
+
+  function folderScanLabel(scan) {
+    if (!scan) return "尚未扫描";
+    if (scan.status === "detected") return `检测到 ${scan.fileCount} 个文件`;
+    return "未检测到文件";
+  }
+
+  function documentStatusLabel(status) {
+    return {
+      pending: "未开始",
+      uploading: "待上传",
+      detected: "已检测到文件",
+      review: "需要复核",
+      done: "已完成",
+      not_applicable: "不适用"
+    }[status] || "未开始";
   }
 
   function formMapping() {
@@ -928,6 +989,39 @@
     renderItinerary();
   }
 
+  function focusFolderDoc(docId) {
+    window.setTimeout(() => {
+      const target = document.querySelector(`[data-folder-doc="${cssEscape(docId)}"]`);
+      if (!target) return;
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+      target.classList.add("attention");
+      window.setTimeout(() => target.classList.remove("attention"), 1400);
+    }, 0);
+  }
+
+  function cssEscape(value) {
+    if (window.CSS?.escape) return window.CSS.escape(value);
+    return String(value).replace(/"/g, '\\"');
+  }
+
+  function applyFolderScanResults(scan) {
+    state.folderScan = scan.byDocId || {};
+    Object.entries(state.folderScan).forEach(([docId, result]) => {
+      const current = state.statuses[docId] || "pending";
+      if (result.status === "detected" && (current === "pending" || current === "uploading")) {
+        state.statuses[docId] = "detected";
+      }
+      if (result.status === "missing" && current === "detected") {
+        state.statuses[docId] = "review";
+      }
+    });
+    saveActiveCase({ quiet: true });
+    renderTable();
+    renderInspector();
+    renderFolders();
+    renderFlow();
+  }
+
   function currentItineraryPlan() {
     return window.VISA_ITINERARY_ENGINE.buildVisaItinerary(
       {
@@ -1139,9 +1233,9 @@
     renderFlow();
     renderSummary();
     renderFilters();
+    renderFolders();
     renderTable();
     renderInspector();
-    renderFolders();
     renderFormMapping();
     renderItinerary();
     renderSources();
@@ -1179,6 +1273,8 @@
     const caseButton = event.target.closest("[data-case]");
     const addCityButton = event.target.closest("[data-add-city]");
     const removeCityButton = event.target.closest("[data-remove-city]");
+    const goFolderButton = event.target.closest("[data-go-folder]");
+    const folderDocButton = event.target.closest("[data-folder-doc]");
 
     if (deleteCaseButton) {
       deleteCase(deleteCaseButton.dataset.deleteCase);
@@ -1190,6 +1286,19 @@
     }
     if (removeCityButton) {
       removeCityFromItinerary(Number.parseInt(removeCityButton.dataset.removeCity, 10));
+      return;
+    }
+    if (goFolderButton) {
+      state.selectedDocId = goFolderButton.dataset.goFolder;
+      state.tab = "folders";
+      render();
+      focusFolderDoc(state.selectedDocId);
+      return;
+    }
+    if (folderDocButton) {
+      state.selectedDocId = folderDocButton.dataset.folderDoc;
+      state.tab = "checklist";
+      render();
       return;
     }
 
@@ -1388,6 +1497,20 @@
       showToast(`已创建 ${result.count} 个资料夹`);
     } catch (error) {
       showToast(error.name === "AbortError" ? "已取消选择目录" : "资料夹创建失败");
+    }
+  });
+
+  document.getElementById("scanFoldersButton").addEventListener("click", async () => {
+    if (!window.VISA_FOLDER_ENGINE.canCreateLocalFolders(window)) {
+      showToast("当前浏览器不支持直接扫描，请先按资料夹结构手动核对");
+      return;
+    }
+    try {
+      const scan = await window.VISA_FOLDER_ENGINE.scanLocalFolders(state.folderPlan, window);
+      applyFolderScanResults(scan);
+      showToast(`扫描完成：${scan.summary.detected} 项检测到文件，${scan.summary.missing} 项待补充`);
+    } catch (error) {
+      showToast(error.name === "AbortError" ? "已取消选择目录" : "资料夹扫描失败");
     }
   });
 

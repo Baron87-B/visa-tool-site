@@ -1002,6 +1002,18 @@ tbody tr.selected {
   background: transparent;
   color: var(--primary);
   padding: 4px;
+  cursor: pointer;
+}
+
+.doc-folder-link {
+  margin-top: 5px;
+  color: var(--primary);
+  font-size: 12px;
+}
+
+.compact-button {
+  min-height: 32px;
+  padding: 0 10px;
 }
 
 .inspector h2 {
@@ -1082,6 +1094,120 @@ tbody tr.selected {
   font-size: 13px;
   line-height: 1.65;
   white-space: pre-wrap;
+}
+
+.folder-status {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-subtle);
+}
+
+.folder-status strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.folder-status span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.folder-document-map {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.folder-map-card {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  overflow: hidden;
+}
+
+.folder-map-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--line);
+}
+
+.folder-map-head strong {
+  font-size: 13px;
+}
+
+.folder-map-head span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.folder-doc-list {
+  display: grid;
+}
+
+.folder-doc-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: white;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.folder-doc-item:last-child {
+  border-bottom: 0;
+}
+
+.folder-doc-item:hover,
+.folder-doc-item.attention {
+  background: var(--primary-soft);
+}
+
+.folder-doc-item strong,
+.folder-doc-item small,
+.folder-doc-item em {
+  display: block;
+}
+
+.folder-doc-item small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.folder-doc-item em {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.folder-doc-item.detected em {
+  color: var(--info);
+}
+
+.folder-doc-item.done em {
+  color: var(--success);
+}
+
+.folder-doc-item.review em {
+  color: var(--warning);
 }
 
 .command-box {
@@ -1767,6 +1893,7 @@ tbody tr.selected {
   .itinerary-grid,
   .itinerary-checks,
   .itinerary-city-row,
+  .folder-document-map,
   .flow-steps,
   .timeline-grid,
   .watermark-grid {
