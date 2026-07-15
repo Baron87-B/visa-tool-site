@@ -1,5 +1,5 @@
 window.VISA_DATA = {
-  version: "0.5.2",
+  version: "0.5.3",
   generatedAt: "2026-06-27",
   reviewPolicy: {
     p0: "申根、美国、英国、加拿大每周复核官方来源。",
@@ -7,6 +7,12 @@ window.VISA_DATA = {
     p2: "eVisa 国家每月复核，用户生成清单当天做快速检查。"
   },
   iterations: [
+    {
+      version: "0.5.3",
+      date: "2026-07-15",
+      title: "Kiwi 进入动画",
+      detail: "访问口令页新增原创 Kiwi 助跑起飞动画，让品牌口号和进入体验更有记忆点，并支持减少动态效果设置。"
+    },
     {
       version: "0.5.2",
       date: "2026-07-15",

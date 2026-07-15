@@ -35,6 +35,7 @@ body {
 }
 
 body:not(.auth-unlocked) {
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -54,7 +55,7 @@ body.auth-unlocked .auth-gate {
   z-index: 100;
   display: grid;
   place-items: center;
-  min-width: 1120px;
+  min-width: 0;
   padding: 32px;
   background:
     linear-gradient(135deg, rgb(246 247 249 / 0.96), rgb(234 242 255 / 0.94)),
@@ -62,14 +63,247 @@ body.auth-unlocked .auth-gate {
 }
 
 .auth-panel {
-  width: min(460px, 100%);
+  width: min(520px, 100%);
   display: grid;
-  gap: 22px;
+  gap: 20px;
   padding: 28px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   box-shadow: 0 18px 48px rgb(16 24 40 / 0.16);
+}
+
+.kiwi-stage {
+  height: 166px;
+  border: 1px solid #d8e0ec;
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.34)),
+    linear-gradient(135deg, #eaf2ff, #f7f4df 70%, #edf7ef);
+}
+
+.kiwi-scene {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.travel-line {
+  position: absolute;
+  left: 28px;
+  right: 32px;
+  bottom: 34px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1765e8, #13a37b, #d6a328);
+  transform-origin: left center;
+  animation: travelLine 1.2s ease-out both;
+}
+
+.travel-line::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: -5px;
+  width: 13px;
+  height: 13px;
+  border-right: 3px solid #d6a328;
+  border-top: 3px solid #d6a328;
+  transform: rotate(45deg);
+}
+
+.passport-tile {
+  position: absolute;
+  right: 42px;
+  bottom: 46px;
+  width: 58px;
+  height: 40px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1px solid #c8d3e2;
+  box-shadow: 0 8px 18px rgb(16 24 40 / 0.12);
+  animation: passportPop 900ms ease-out 450ms both;
+}
+
+.passport-tile::before,
+.passport-tile::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  height: 3px;
+  border-radius: 999px;
+  background: #c3cad6;
+}
+
+.passport-tile::before {
+  top: 13px;
+}
+
+.passport-tile::after {
+  top: 23px;
+  right: 20px;
+}
+
+.kiwi-bird {
+  position: absolute;
+  left: 74px;
+  bottom: 33px;
+  width: 116px;
+  height: 94px;
+  transform-origin: 64px 86px;
+  animation: kiwiTakeoff 2.6s cubic-bezier(0.19, 1, 0.22, 1) 220ms both;
+}
+
+.kiwi-body {
+  position: absolute;
+  left: 18px;
+  bottom: 8px;
+  width: 78px;
+  height: 72px;
+  border-radius: 58% 48% 50% 54%;
+  background:
+    radial-gradient(circle at 62% 34%, #6b4e32 0 4px, transparent 5px),
+    radial-gradient(circle at 34% 46%, #9d7d52 0 20px, #6e5438 58%, #4d392a 100%);
+  box-shadow: inset -10px -8px 0 rgb(44 31 22 / 0.18);
+}
+
+.kiwi-feather {
+  position: absolute;
+  left: 18px;
+  top: 20px;
+  width: 32px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgb(255 255 255 / 0.32);
+  border-left: 0;
+  border-bottom: 0;
+  transform: rotate(-24deg);
+}
+
+.kiwi-eye {
+  position: absolute;
+  right: 15px;
+  top: 22px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #151515;
+}
+
+.kiwi-beak {
+  position: absolute;
+  right: -40px;
+  top: 30px;
+  width: 48px;
+  height: 6px;
+  border-radius: 999px;
+  background: #c6923a;
+  transform: rotate(-5deg);
+}
+
+.kiwi-leg {
+  position: absolute;
+  bottom: -16px;
+  width: 3px;
+  height: 20px;
+  border-radius: 999px;
+  background: #9a6a30;
+  transform-origin: top center;
+  animation: kiwiLegRun 520ms ease-in-out 3;
+}
+
+.kiwi-leg.left {
+  left: 30px;
+}
+
+.kiwi-leg.right {
+  left: 48px;
+  animation-delay: 120ms;
+}
+
+.kiwi-shadow {
+  position: absolute;
+  left: 74px;
+  bottom: 24px;
+  width: 96px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgb(38 50 56 / 0.16);
+  animation: kiwiShadow 2.6s cubic-bezier(0.19, 1, 0.22, 1) 220ms both;
+}
+
+@keyframes kiwiTakeoff {
+  0% {
+    transform: translate(-62px, 6px) rotate(-8deg) scale(0.9);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  38% {
+    transform: translate(42px, 0) rotate(4deg) scale(1);
+  }
+  62% {
+    transform: translate(156px, -54px) rotate(-7deg) scale(1.04);
+  }
+  82% {
+    transform: translate(245px, -18px) rotate(5deg) scale(0.98);
+  }
+  100% {
+    transform: translate(276px, 0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes kiwiShadow {
+  0% {
+    transform: translateX(-52px) scale(0.72);
+    opacity: 0;
+  }
+  28% {
+    opacity: 1;
+  }
+  62% {
+    transform: translateX(168px) scale(0.42);
+    opacity: 0.08;
+  }
+  100% {
+    transform: translateX(278px) scale(0.75);
+    opacity: 0.18;
+  }
+}
+
+@keyframes kiwiLegRun {
+  0%,
+  100% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(20deg);
+  }
+}
+
+@keyframes travelLine {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes passportPop {
+  0% {
+    transform: translateY(12px) scale(0.92);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 .auth-eyebrow {
@@ -135,6 +369,53 @@ body.auth-unlocked .auth-gate {
   margin: 0;
   color: var(--danger);
   font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kiwi-bird,
+  .kiwi-shadow,
+  .kiwi-leg,
+  .travel-line,
+  .passport-tile {
+    animation: none;
+  }
+
+  .travel-line,
+  .passport-tile {
+    opacity: 1;
+  }
+
+  .kiwi-bird {
+    transform: translate(276px, 0);
+    opacity: 1;
+  }
+
+  .kiwi-shadow {
+    transform: translateX(278px) scale(0.75);
+    opacity: 0.18;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-gate {
+    padding: 18px;
+  }
+
+  .auth-panel {
+    padding: 20px;
+  }
+
+  .kiwi-stage {
+    height: 142px;
+  }
+
+  .kiwi-bird {
+    left: 26px;
+  }
+
+  .kiwi-shadow {
+    left: 26px;
+  }
 }
 
 button,
