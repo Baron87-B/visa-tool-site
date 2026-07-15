@@ -1,5 +1,5 @@
 window.VISA_DATA = {
-  version: "0.5.6",
+  version: "0.5.7",
   generatedAt: "2026-06-27",
   reviewPolicy: {
     p0: "申根、美国、英国、加拿大每周复核官方来源。",
@@ -7,6 +7,12 @@ window.VISA_DATA = {
     p2: "eVisa 国家每月复核，用户生成清单当天做快速检查。"
   },
   iterations: [
+    {
+      version: "0.5.7",
+      date: "2026-07-15",
+      title: "真实行程与酒店核对",
+      detail: "行程生成器不再自动编写酒店名称或地址，改为按目的地推荐城市、逐段填写真实酒店、打开地图核对并标记核对状态，降低虚假行程信息影响审核的风险。"
+    },
     {
       version: "0.5.6",
       date: "2026-07-15",

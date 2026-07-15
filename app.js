@@ -6,6 +6,27 @@
     supporting: "支持材料",
     low_value: "低价值/不推荐"
   };
+  const itineraryReliabilityNote = "不自动生成酒店；酒店和地址必须由用户填写并通过地图核对。";
+  const generatedHotelPlaceholders = new Set([
+    "Hotel Madrid Centro|Calle Mayor 1, Madrid",
+    "Hotel Barcelona Port|La Rambla 2, Barcelona",
+    "Midtown Hotel|5th Avenue, New York",
+    "Downtown Hotel|South Grand Avenue, Los Angeles",
+    "London Central Hotel|Strand, London",
+    "Vancouver Downtown Hotel|Robson Street, Vancouver",
+    "Toronto Centre Hotel|King Street, Toronto",
+    "Sydney Harbour Hotel|George Street, Sydney",
+    "Melbourne Central Hotel|Swanston Street, Melbourne",
+    "Auckland City Hotel|Queen Street, Auckland",
+    "Queenstown Lake Hotel|Lake Esplanade, Queenstown",
+    "Tokyo Station Hotel|Marunouchi, Tokyo",
+    "Osaka Namba Hotel|Namba, Osaka",
+    "Seoul Myeongdong Hotel|Myeongdong, Seoul",
+    "Hanoi Old Quarter Hotel|Hoan Kiem, Hanoi",
+    "Saigon Central Hotel|District 1, Ho Chi Minh City",
+    "Moscow Centre Hotel|Tverskaya Street, Moscow",
+    "Nevsky Hotel|Nevsky Prospekt, Saint Petersburg"
+  ]);
   const initialCaseData = window.VISA_CASE_STORE.loadCases(data.destinations);
   const initialSnapshot = initialCaseData.activeCase?.snapshot || {};
   const initialDestinationId = initialCaseData.activeCase?.destinationId || "schengen-spain";
@@ -72,6 +93,8 @@
     itineraryInboundFlight: document.getElementById("itineraryInboundFlight"),
     itineraryOutboundFlight: document.getElementById("itineraryOutboundFlight"),
     itineraryCitiesInput: document.getElementById("itineraryCitiesInput"),
+    itineraryCityOptions: document.getElementById("itineraryCityOptions"),
+    itineraryCityRows: document.getElementById("itineraryCityRows"),
     itineraryChecks: document.getElementById("itineraryChecks"),
     itinerarySummary: document.getElementById("itinerarySummary"),
     itineraryResult: document.getElementById("itineraryResult"),
@@ -672,17 +695,18 @@
 
   function defaultItineraryValues(destinationId) {
     const destinationDefaults = {
-      "schengen-spain": "马德里 | 2 | Hotel Madrid Centro | Calle Mayor 1, Madrid\n巴塞罗那 | 2 | Hotel Barcelona Port | La Rambla 2, Barcelona",
-      "us-b1b2": "纽约 | 3 | Midtown Hotel | 5th Avenue, New York\n洛杉矶 | 2 | Downtown Hotel | South Grand Avenue, Los Angeles",
-      "uk-standard-visitor": "伦敦 | 4 | London Central Hotel | Strand, London",
-      "canada-visitor": "温哥华 | 2 | Vancouver Downtown Hotel | Robson Street, Vancouver\n多伦多 | 3 | Toronto Centre Hotel | King Street, Toronto",
-      "australia-600": "悉尼 | 3 | Sydney Harbour Hotel | George Street, Sydney\n墨尔本 | 2 | Melbourne Central Hotel | Swanston Street, Melbourne",
-      "new-zealand-visitor": "奥克兰 | 2 | Auckland City Hotel | Queen Street, Auckland\n皇后镇 | 3 | Queenstown Lake Hotel | Lake Esplanade, Queenstown",
-      "japan-short": "东京 | 3 | Tokyo Station Hotel | Marunouchi, Tokyo\n大阪 | 2 | Osaka Namba Hotel | Namba, Osaka",
-      "korea-c3": "首尔 | 4 | Seoul Myeongdong Hotel | Myeongdong, Seoul",
-      "vietnam-evisa": "河内 | 2 | Hanoi Old Quarter Hotel | Hoan Kiem, Hanoi\n胡志明市 | 2 | Saigon Central Hotel | District 1, Ho Chi Minh City",
-      "russia-evisa": "莫斯科 | 3 | Moscow Centre Hotel | Tverskaya Street, Moscow\n圣彼得堡 | 2 | Nevsky Hotel | Nevsky Prospekt, Saint Petersburg"
+      "schengen-spain": [{ name: "马德里", nights: 2 }, { name: "巴塞罗那", nights: 2 }],
+      "us-b1b2": [{ name: "纽约", nights: 3 }, { name: "洛杉矶", nights: 2 }],
+      "uk-standard-visitor": [{ name: "伦敦", nights: 4 }],
+      "canada-visitor": [{ name: "温哥华", nights: 2 }, { name: "多伦多", nights: 3 }],
+      "australia-600": [{ name: "悉尼", nights: 3 }, { name: "墨尔本", nights: 2 }],
+      "new-zealand-visitor": [{ name: "奥克兰", nights: 2 }, { name: "皇后镇", nights: 3 }],
+      "japan-short": [{ name: "东京", nights: 3 }, { name: "大阪", nights: 2 }],
+      "korea-c3": [{ name: "首尔", nights: 4 }],
+      "vietnam-evisa": [{ name: "河内", nights: 2 }, { name: "胡志明市", nights: 2 }],
+      "russia-evisa": [{ name: "莫斯科", nights: 3 }, { name: "圣彼得堡", nights: 2 }]
     };
+    const citySegments = normalizeCitySegments(destinationDefaults[destinationId] || []);
     return {
       destinationId,
       startDate: "2026-10-01",
@@ -691,14 +715,15 @@
       pace: "normal",
       inboundFlight: "",
       outboundFlight: "",
-      citiesText: destinationDefaults[destinationId] || ""
+      citySegments,
+      citiesText: serializeCitySegments(citySegments)
     };
   }
 
   function loadItineraryValues(destinationId = state.destinationId) {
     const fallback = defaultItineraryValues(destinationId);
     try {
-      return { ...fallback, ...JSON.parse(localStorage.getItem(`visaTool.itineraryValues.${destinationId}`) || "{}"), destinationId };
+      return normalizeItineraryValues({ ...fallback, ...JSON.parse(localStorage.getItem(`visaTool.itineraryValues.${destinationId}`) || "{}"), destinationId });
     } catch {
       return fallback;
     }
@@ -715,10 +740,15 @@
     els.itineraryPace.value = state.itinerary.pace;
     els.itineraryInboundFlight.value = state.itinerary.inboundFlight;
     els.itineraryOutboundFlight.value = state.itinerary.outboundFlight;
-    els.itineraryCitiesInput.value = state.itinerary.citiesText;
+    state.itinerary = normalizeItineraryValues(state.itinerary);
+    els.itineraryCitiesInput.value = serializeCitySegments(state.itinerary.citySegments);
+    syncItineraryCityControls();
   }
 
   function readItineraryInputs() {
+    const citySegments = state.itinerary.citySegments?.length
+      ? normalizeCitySegments(state.itinerary.citySegments)
+      : parseItineraryCities(els.itineraryCitiesInput.value);
     state.itinerary = {
       destinationId: state.destinationId,
       startDate: els.itineraryStartDate.value,
@@ -727,13 +757,15 @@
       pace: els.itineraryPace.value,
       inboundFlight: els.itineraryInboundFlight.value.trim(),
       outboundFlight: els.itineraryOutboundFlight.value.trim(),
-      citiesText: els.itineraryCitiesInput.value
+      citySegments,
+      citiesText: serializeCitySegments(citySegments)
     };
+    els.itineraryCitiesInput.value = state.itinerary.citiesText;
     saveItineraryValues();
   }
 
   function parseItineraryCities(text) {
-    return text
+    return normalizeCitySegments(String(text || "")
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean)
@@ -743,9 +775,157 @@
           name: (parts[0] || "").trim(),
           nights: Number.parseInt((parts[1] || "").trim(), 10) || 0,
           hotel: (parts[2] || "").trim(),
-          hotelAddress: parts.slice(3).join("|").trim()
+          hotelAddress: (parts[3] || "").trim(),
+          hotelVerified: ["true", "已核对", "yes"].includes((parts[4] || "").trim().toLowerCase())
         };
-      });
+      }));
+  }
+
+  function normalizeItineraryValues(values) {
+    const citySegments = normalizeCitySegments(
+      values.citySegments?.length ? values.citySegments : parseItineraryCities(values.citiesText || "")
+    ).map(clearGeneratedHotelPlaceholder);
+    return {
+      ...values,
+      citySegments,
+      citiesText: serializeCitySegments(citySegments)
+    };
+  }
+
+  function normalizeCitySegments(segments) {
+    return (segments || [])
+      .map((segment) => ({
+        name: String(segment.name || "").trim(),
+        nights: Math.max(1, Number.parseInt(segment.nights, 10) || 1),
+        hotel: String(segment.hotel || "").trim(),
+        hotelAddress: String(segment.hotelAddress || "").trim(),
+        hotelVerified: segment.hotelVerified === true || segment.hotelVerified === "true" || segment.hotelVerified === "已核对"
+      }))
+      .filter((segment) => segment.name);
+  }
+
+  function clearGeneratedHotelPlaceholder(segment) {
+    if (!generatedHotelPlaceholders.has(`${segment.hotel}|${segment.hotelAddress}`)) return segment;
+    return { ...segment, hotel: "", hotelAddress: "", hotelVerified: false };
+  }
+
+  function serializeCitySegments(segments) {
+    return normalizeCitySegments(segments)
+      .map((segment) => [
+        segment.name,
+        segment.nights,
+        segment.hotel,
+        segment.hotelAddress,
+        segment.hotelVerified ? "已核对" : "待核对"
+      ].join(" | "))
+      .join("\n");
+  }
+
+  function cityOptionsForDestination(destinationId) {
+    const options = {
+      "schengen-spain": ["马德里", "巴塞罗那", "塞维利亚", "格拉纳达", "瓦伦西亚"],
+      "us-b1b2": ["纽约", "洛杉矶", "旧金山", "拉斯维加斯", "华盛顿", "波士顿", "芝加哥", "西雅图"],
+      "uk-standard-visitor": ["伦敦", "爱丁堡", "曼彻斯特", "牛津", "剑桥"],
+      "canada-visitor": ["温哥华", "多伦多", "蒙特利尔", "渥太华", "卡尔加里"],
+      "australia-600": ["悉尼", "墨尔本", "布里斯班", "黄金海岸", "堪培拉"],
+      "new-zealand-visitor": ["奥克兰", "皇后镇", "基督城", "罗托鲁瓦", "惠灵顿"],
+      "japan-short": ["东京", "大阪", "京都", "奈良", "福冈", "札幌"],
+      "korea-c3": ["首尔", "釜山", "济州", "仁川"],
+      "vietnam-evisa": ["河内", "胡志明市", "岘港", "会安"],
+      "russia-evisa": ["莫斯科", "圣彼得堡", "喀山"]
+    };
+    return options[destinationId] || [];
+  }
+
+  function syncItineraryCityControls() {
+    const options = cityOptionsForDestination(state.destinationId);
+    els.itineraryCityOptions.innerHTML = options
+      .map((city) => `<button class="city-chip" type="button" data-add-city="${escapeHtml(city)}">${escapeHtml(city)}</button>`)
+      .join("");
+    els.itineraryCityRows.innerHTML = state.itinerary.citySegments
+      .map((segment, index) => renderItineraryCityRow(segment, index))
+      .join("");
+  }
+
+  function renderItineraryCityRow(segment, index) {
+    const mapHref = hotelMapUrl(segment);
+    return `<div class="itinerary-city-row" data-city-row="${index}">
+      <label>
+        <span>城市</span>
+        <input type="text" value="${escapeHtml(segment.name)}" data-city-index="${index}" data-city-field="name" />
+      </label>
+      <label>
+        <span>晚数</span>
+        <input type="number" min="1" value="${segment.nights}" data-city-index="${index}" data-city-field="nights" />
+      </label>
+      <label>
+        <span>真实酒店名称</span>
+        <input type="text" value="${escapeHtml(segment.hotel)}" placeholder="从酒店订单或地图复制" data-city-index="${index}" data-city-field="hotel" />
+      </label>
+      <label>
+        <span>酒店地址</span>
+        <input type="text" value="${escapeHtml(segment.hotelAddress)}" placeholder="填写完整地址，避免只写商圈" data-city-index="${index}" data-city-field="hotelAddress" />
+      </label>
+      <div class="city-row-actions">
+        <a class="secondary-button map-link" href="${mapHref}" target="_blank" rel="noreferrer" data-map-hotel="${index}">地图核对</a>
+        <label class="toggle-row compact">
+          <input type="checkbox" ${segment.hotelVerified ? "checked" : ""} data-city-index="${index}" data-city-field="hotelVerified" />
+          <span>已核对</span>
+        </label>
+        <button class="ghost-button danger" type="button" data-remove-city="${index}">删除</button>
+      </div>
+    </div>`;
+  }
+
+  function hotelMapUrl(segment) {
+    const query = [segment.hotel, segment.hotelAddress, segment.name].filter(Boolean).join(" ") || `${segment.name} hotel`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  }
+
+  function addCityToItinerary(cityName) {
+    const citySegments = normalizeCitySegments(state.itinerary.citySegments);
+    const existing = citySegments.find((segment) => segment.name === cityName);
+    if (existing) {
+      existing.nights += 1;
+    } else {
+      citySegments.push({ name: cityName, nights: 1, hotel: "", hotelAddress: "", hotelVerified: false });
+    }
+    state.itinerary.citySegments = citySegments;
+    state.itinerary.citiesText = serializeCitySegments(citySegments);
+    els.itineraryCitiesInput.value = state.itinerary.citiesText;
+    saveItineraryValues();
+    syncItineraryCityControls();
+    renderItinerary();
+  }
+
+  function updateCitySegment(index, field, value) {
+    const citySegments = normalizeCitySegments(state.itinerary.citySegments);
+    if (!citySegments[index]) return;
+    if (field === "nights") {
+      citySegments[index].nights = Math.max(1, Number.parseInt(value, 10) || 1);
+    } else if (field === "hotelVerified") {
+      citySegments[index].hotelVerified = Boolean(value);
+    } else {
+      citySegments[index][field] = String(value || "").trim();
+      if (field === "hotel" || field === "hotelAddress") {
+        citySegments[index].hotelVerified = false;
+      }
+    }
+    state.itinerary.citySegments = normalizeCitySegments(citySegments);
+    state.itinerary.citiesText = serializeCitySegments(state.itinerary.citySegments);
+    els.itineraryCitiesInput.value = state.itinerary.citiesText;
+    saveItineraryValues();
+  }
+
+  function removeCityFromItinerary(index) {
+    const citySegments = normalizeCitySegments(state.itinerary.citySegments);
+    citySegments.splice(index, 1);
+    state.itinerary.citySegments = citySegments;
+    state.itinerary.citiesText = serializeCitySegments(citySegments);
+    els.itineraryCitiesInput.value = state.itinerary.citiesText;
+    saveItineraryValues();
+    syncItineraryCityControls();
+    renderItinerary();
   }
 
   function currentItineraryPlan() {
@@ -759,7 +939,7 @@
         pace: state.itinerary.pace,
         inboundFlight: state.itinerary.inboundFlight,
         outboundFlight: state.itinerary.outboundFlight,
-        cities: parseItineraryCities(state.itinerary.citiesText)
+        cities: state.itinerary.citySegments || parseItineraryCities(state.itinerary.citiesText)
       },
       window.VISA_ITINERARY_RULES
     );
@@ -783,6 +963,7 @@
       <span>路线：${plan.summary.route || "待填写"}</span>
       <span>${plan.summary.totalDays} 天 / ${plan.summary.totalNights} 晚</span>
       <span>主停留城市：${plan.summary.mainCity || "待判断"}</span>
+      <span>${itineraryReliabilityNote}</span>
     </div>`;
     els.itineraryResult.innerHTML = plan.days
       .map(
@@ -996,9 +1177,19 @@
     const flowAction = event.target.closest("[data-flow-action]");
     const deleteCaseButton = event.target.closest("[data-delete-case]");
     const caseButton = event.target.closest("[data-case]");
+    const addCityButton = event.target.closest("[data-add-city]");
+    const removeCityButton = event.target.closest("[data-remove-city]");
 
     if (deleteCaseButton) {
       deleteCase(deleteCaseButton.dataset.deleteCase);
+      return;
+    }
+    if (addCityButton) {
+      addCityToItinerary(addCityButton.dataset.addCity);
+      return;
+    }
+    if (removeCityButton) {
+      removeCityFromItinerary(Number.parseInt(removeCityButton.dataset.removeCity, 10));
       return;
     }
 
@@ -1039,15 +1230,27 @@
       saveFormFieldValues();
       return;
     }
+    const cityField = event.target.dataset.cityField;
+    if (cityField && event.target.type !== "checkbox") {
+      updateCitySegment(Number.parseInt(event.target.dataset.cityIndex, 10), cityField, event.target.value);
+      renderItinerary();
+      return;
+    }
     if (
       event.target === els.itineraryStartDate ||
       event.target === els.itineraryOriginCity ||
       event.target === els.itineraryReturnCity ||
       event.target === els.itineraryInboundFlight ||
-      event.target === els.itineraryOutboundFlight ||
-      event.target === els.itineraryCitiesInput
+      event.target === els.itineraryOutboundFlight
     ) {
       readItineraryInputs();
+      return;
+    }
+    if (event.target === els.itineraryCitiesInput) {
+      state.itinerary.citySegments = parseItineraryCities(els.itineraryCitiesInput.value);
+      readItineraryInputs();
+      syncItineraryCityControls();
+      renderItinerary();
       return;
     }
     if (
@@ -1065,6 +1268,17 @@
     if (statusDoc) {
       state.statuses[statusDoc] = event.target.value;
       showToast("资料状态已更新");
+      return;
+    }
+    const cityField = event.target.dataset.cityField;
+    if (cityField) {
+      updateCitySegment(
+        Number.parseInt(event.target.dataset.cityIndex, 10),
+        cityField,
+        event.target.type === "checkbox" ? event.target.checked : event.target.value
+      );
+      syncItineraryCityControls();
+      renderItinerary();
       return;
     }
     if (event.target === els.itineraryPace || event.target === els.itineraryStartDate) {

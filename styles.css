@@ -1501,6 +1501,114 @@ tbody tr.selected {
   border-color: var(--primary);
 }
 
+.itinerary-city-builder {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+}
+
+.city-builder-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.city-builder-head strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.city-builder-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.itinerary-city-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.city-chip {
+  min-height: 32px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--text);
+  padding: 0 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.city-chip:hover {
+  border-color: #b8d2ff;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.itinerary-city-rows {
+  display: grid;
+  gap: 10px;
+}
+
+.itinerary-city-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 80px minmax(180px, 1.3fr) minmax(220px, 1.6fr) minmax(230px, auto);
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-subtle);
+}
+
+.itinerary-city-row label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.itinerary-city-row input {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: white;
+  color: var(--text);
+  padding: 0 10px;
+}
+
+.city-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  text-decoration: none;
+}
+
+.ghost-button.danger {
+  color: var(--danger);
+}
+
+.itinerary-cities summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .itinerary-checks {
   display: grid;
   grid-template-columns: repeat(4, minmax(130px, 1fr));
@@ -1658,6 +1766,7 @@ tbody tr.selected {
 
   .itinerary-grid,
   .itinerary-checks,
+  .itinerary-city-row,
   .flow-steps,
   .timeline-grid,
   .watermark-grid {

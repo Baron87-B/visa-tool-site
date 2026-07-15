@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>签证资料工作台</title>
-    <link rel="stylesheet" href="styles.css?v=0.5.6" />
+    <link rel="stylesheet" href="styles.css?v=0.5.7" />
   </head>
   <body>
     <section class="auth-gate" id="authGate" aria-label="访问口令">
@@ -51,7 +51,7 @@
         <div class="brand">
           <div>
             <strong>签证资料工作台</strong>
-            <span>v0.5.6 状态同步修复</span>
+            <span>v0.5.7 真实行程核对</span>
             <p class="brand-tagline">不会飞的 Kiwi，也可以找到起飞的方法。</p>
             <p class="brand-tagline en">From visa to journey, fly your own way.</p>
           </div>
@@ -271,7 +271,7 @@
             <div class="panel-heading">
               <div>
                 <h2>签证行程单生成器</h2>
-                <p>输入城市、晚数、酒店和航班，生成可导出的每日行程与材料一致性检查。</p>
+                <p>选择城市、填写真实酒店和地址，并通过地图核对后生成每日行程与材料一致性检查。</p>
               </div>
               <div class="panel-actions">
                 <button class="secondary-button" id="exportItineraryButton">导出 CSV</button>
@@ -309,10 +309,20 @@
                   <input type="text" id="itineraryOutboundFlight" placeholder="例：MU710 巴塞罗那-上海 2026-10-05" />
                 </label>
               </div>
-              <label class="itinerary-cities">
-                <span>城市停留</span>
-                <textarea id="itineraryCitiesInput" class="itinerary-cities-input" spellcheck="false"></textarea>
-              </label>
+              <div class="itinerary-city-builder">
+                <div class="city-builder-head">
+                  <div>
+                    <strong>城市停留与酒店核对</strong>
+                    <p>不自动生成酒店。请填写真实酒店名称和地址，打开地图核对后再勾选“已核对”。</p>
+                  </div>
+                </div>
+                <div class="itinerary-city-options" id="itineraryCityOptions" aria-label="推荐城市"></div>
+                <div class="itinerary-city-rows" id="itineraryCityRows"></div>
+                <details class="itinerary-cities">
+                  <summary>高级导入/备份文本</summary>
+                  <textarea id="itineraryCitiesInput" class="itinerary-cities-input" spellcheck="false"></textarea>
+                </details>
+              </div>
             </div>
             <div class="itinerary-checks" id="itineraryChecks"></div>
             <div class="itinerary-summary" id="itinerarySummary"></div>
@@ -382,15 +392,15 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="data.js?v=0.5.6"></script>
-    <script src="formFields.js?v=0.5.6"></script>
-    <script src="caseStore.js?v=0.5.6"></script>
-    <script src="folderEngine.js?v=0.5.6"></script>
-    <script src="flowEngine.js?v=0.5.6"></script>
-    <script src="itineraryRules.js?v=0.5.6"></script>
-    <script src="itineraryEngine.js?v=0.5.6"></script>
-    <script src="watermarkEngine.js?v=0.5.6"></script>
-    <script src="app.js?v=0.5.6"></script>
-    <script src="authGate.js?v=0.5.6"></script>
+    <script src="data.js?v=0.5.7"></script>
+    <script src="formFields.js?v=0.5.7"></script>
+    <script src="caseStore.js?v=0.5.7"></script>
+    <script src="folderEngine.js?v=0.5.7"></script>
+    <script src="flowEngine.js?v=0.5.7"></script>
+    <script src="itineraryRules.js?v=0.5.7"></script>
+    <script src="itineraryEngine.js?v=0.5.7"></script>
+    <script src="watermarkEngine.js?v=0.5.7"></script>
+    <script src="app.js?v=0.5.7"></script>
+    <script src="authGate.js?v=0.5.7"></script>
   </body>
 </html>

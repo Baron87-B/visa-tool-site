@@ -32,8 +32,9 @@
         date,
         city: segment?.name || "",
         plan,
-        hotel: isDeparture ? "离境日不住宿" : segment?.hotel || "待补充酒店",
-        hotelAddress: isDeparture ? "" : segment?.hotelAddress || "待补充酒店地址",
+        hotel: isDeparture ? "离境日不住宿" : segment?.hotel || "待补充真实酒店",
+        hotelAddress: isDeparture ? "" : segment?.hotelAddress || "待补充真实酒店地址",
+        hotelVerified: isDeparture ? true : Boolean(segment?.hotelVerified),
         flight: isArrival ? input.inboundFlight : isDeparture ? input.outboundFlight : ""
       });
     }
@@ -58,7 +59,8 @@
         name: String(city.name || "").trim(),
         nights: Math.max(0, Number.parseInt(city.nights, 10) || 0),
         hotel: String(city.hotel || "").trim(),
-        hotelAddress: String(city.hotelAddress || "").trim()
+        hotelAddress: String(city.hotelAddress || "").trim(),
+        hotelVerified: city.hotelVerified === true || city.hotelVerified === "true" || city.hotelVerified === "已核对"
       }))
       .filter((city) => city.name && city.nights > 0);
   }
@@ -115,7 +117,16 @@
         id: "accommodationCoverage",
         label: "住宿覆盖",
         status: missing.length === 0 ? "pass" : "warn",
-        message: missing.length === 0 ? "每一段城市停留都有酒店名称和地址。" : `缺少住宿信息：${missing.map((city) => city.name).join("、")}`
+        message: missing.length === 0 ? "每一段城市停留都有真实酒店名称和地址。" : `缺少真实住宿信息：${missing.map((city) => city.name).join("、")}`
+      });
+      const unverified = cities.filter((city) => !city.hotel || !city.hotelAddress || !city.hotelVerified);
+      checks.push({
+        id: "hotelVerification",
+        label: "酒店核对",
+        status: unverified.length === 0 ? "pass" : "warn",
+        message: unverified.length === 0
+          ? "所有住宿已填写并标记为地图核对。"
+          : `请填写真实酒店名称和地址，并通过地图核对：${unverified.map((city) => city.name).join("、")}`
       });
     }
     if (rules.requiredChecks.includes("flightCoverage")) {
@@ -152,8 +163,17 @@
       ["总天数", summary.totalDays],
       ["总晚数", summary.totalNights],
       [],
-      ["日期", "天数", "城市", "行程安排", "酒店", "酒店地址", "航班"],
-      ...days.map((day) => [day.date, day.day, day.city, day.plan, day.hotel, day.hotelAddress, day.flight]),
+      ["日期", "天数", "城市", "行程安排", "酒店", "酒店地址", "酒店核对", "航班"],
+      ...days.map((day) => [
+        day.date,
+        day.day,
+        day.city,
+        day.plan,
+        day.hotel,
+        day.hotelAddress,
+        day.hotel === "离境日不住宿" ? "不适用" : day.hotelVerified ? "已核对" : "待核对",
+        day.flight
+      ]),
       [],
       ["检查项", "状态", "说明"],
       ...checks.map((check) => [check.label, check.status, check.message])
