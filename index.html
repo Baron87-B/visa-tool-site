@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>签证资料工作台</title>
+    <link rel="stylesheet" href="styles.css?v=0.5.1" />
+  </head>
+  <body>
+    <section class="auth-gate" id="authGate" aria-label="访问口令">
+      <div class="auth-panel">
+        <div>
+          <p class="auth-eyebrow">Private Preview</p>
+          <h1>签证资料工作台</h1>
+          <p>当前是早期迭代版本，请输入访问口令后继续。工具仍然坚持本地隐私处理，不上传你的证件资料。</p>
+        </div>
+        <form class="auth-form" id="authForm">
+          <label>
+            <span>访问口令</span>
+            <input type="password" id="authSecretInput" autocomplete="current-password" required />
+          </label>
+          <button class="primary-button" type="submit">进入工作台</button>
+          <p class="auth-error" id="authError" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <div class="app-shell" data-auth-required="true">
+      <aside class="sidebar" aria-label="目的地和案例">
+        <div class="brand">
+          <div>
+            <strong>签证资料工作台</strong>
+            <span>v0.5.1 公开预览口令门</span>
+          </div>
+        </div>
+
+        <section class="side-section">
+          <div class="side-heading">
+            <span>目的地</span>
+            <button class="ghost-button" id="reviewCycleButton">复核</button>
+          </div>
+          <div class="destination-list" id="destinationList"></div>
+        </section>
+
+        <section class="side-section cases">
+          <div class="side-heading">
+            <span>我的案件</span>
+            <button class="ghost-button" id="newCaseButton">新建</button>
+          </div>
+          <div class="case-list" id="caseList"></div>
+        </section>
+
+        <section class="side-section small">
+          <div class="side-heading">
+            <span>数据原则</span>
+          </div>
+          <p>材料清单以官方和签证中心页面为主。社媒攻略只进入未验证线索，不进入必需材料规则。</p>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <div class="eyebrow" id="caseMeta">中国大陆普通护照</div>
+            <h1 id="caseTitle">西班牙申根旅游签</h1>
+          </div>
+          <div class="top-actions">
+            <span class="check-date" id="lastChecked">最后核验：--</span>
+            <button class="secondary-button" id="authLockButton">退出访问</button>
+            <button class="secondary-button" id="saveCaseButton">保存案件</button>
+            <button class="secondary-button" id="exportJsonButton">导出规则</button>
+            <button class="primary-button" id="folderButton">生成资料夹</button>
+          </div>
+        </header>
+
+        <section class="profile-panel" aria-label="申请人画像">
+          <div class="profile-header">
+            <h2>申请人画像</h2>
+            <button class="link-button" id="resetProfileButton">重置条件</button>
+          </div>
+          <div class="profile-grid">
+            <label>
+              <span>身份</span>
+              <select id="profileSelect">
+                <option value="employed">在职成人</option>
+                <option value="self_employed">自由职业</option>
+                <option value="student">学生</option>
+                <option value="retired">退休人员</option>
+                <option value="minor">未成年人</option>
+              </select>
+            </label>
+            <label>
+              <span>出行目的</span>
+              <select id="purposeSelect">
+                <option value="tourism">旅游/观光</option>
+                <option value="family_visit">探亲访友</option>
+                <option value="business">商务/会议</option>
+              </select>
+            </label>
+            <label>
+              <span>同行情况</span>
+              <select id="partySelect">
+                <option value="solo">独自出行</option>
+                <option value="family">家庭同行</option>
+              </select>
+            </label>
+            <label>
+              <span>受理领区</span>
+              <select id="jurisdictionSelect"></select>
+            </label>
+            <label>
+              <span>月收入范围</span>
+              <select id="incomeSelect">
+                <option value="low">5,000 元以下</option>
+                <option value="mid">5,000 - 10,000 元</option>
+                <option value="high" selected>10,000 - 20,000 元</option>
+                <option value="very_high">20,000 元以上</option>
+              </select>
+            </label>
+            <label class="toggle-row">
+              <input type="checkbox" id="invitationToggle" />
+              <span>本次有邀请人/接待方</span>
+            </label>
+          </div>
+        </section>
+
+        <nav class="tabs" aria-label="工作区标签">
+          <button class="tab active" data-tab="flow">办理流程</button>
+          <button class="tab" data-tab="checklist">资料清单</button>
+          <button class="tab" data-tab="forms">表格填写</button>
+          <button class="tab" data-tab="itinerary">行程生成</button>
+          <button class="tab" data-tab="folders">资料夹结构</button>
+          <button class="tab" data-tab="sources">官方来源</button>
+          <button class="tab" data-tab="iterations">版本迭代</button>
+        </nav>
+
+        <div class="content-grid">
+          <section class="main-panel" id="flowTab">
+            <div class="panel-heading">
+              <div>
+                <h2>办理流程导览</h2>
+                <p>从选择签证类型到递签前复核，按步骤推进，不再面对一张清单发呆。</p>
+              </div>
+              <button class="primary-button" id="nextFlowButton">下一步</button>
+            </div>
+            <div class="flow-steps" id="flowSteps"></div>
+
+            <div class="timeline-planner">
+              <div class="panel-heading inline">
+                <div>
+                  <h2>时间计划表</h2>
+                  <p>按预计递签日期倒排材料准备节奏，优先处理盖章、流水、预约和行程材料。</p>
+                </div>
+                <button class="secondary-button" id="generateTimelineButton">生成计划</button>
+              </div>
+              <div class="timeline-grid">
+                <label>
+                  <span>预计递签日期</span>
+                  <input type="date" id="timelineSubmissionDate" />
+                </label>
+                <label>
+                  <span>预计出发日期</span>
+                  <input type="date" id="timelineDepartureDate" />
+                </label>
+                <label class="toggle-row compact">
+                  <input type="checkbox" id="timelineStampToggle" checked />
+                  <span>需要公司/学校盖章</span>
+                </label>
+                <label class="toggle-row compact">
+                  <input type="checkbox" id="timelineTranslationToggle" />
+                  <span>需要翻译件</span>
+                </label>
+              </div>
+              <div class="table-wrap">
+                <table class="timeline-table">
+                  <thead>
+                    <tr>
+                      <th>节点</th>
+                      <th>建议完成日</th>
+                      <th>任务</th>
+                      <th>材料重点</th>
+                    </tr>
+                  </thead>
+                  <tbody id="timelineRows"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="watermark-tool">
+              <div class="panel-heading inline">
+                <div>
+                  <h2>隐私水印</h2>
+                  <p>证件副本只在本地处理，不会上传；水印用于标注用途，不改变材料真实性。</p>
+                </div>
+                <button class="secondary-button" id="exportWatermarkButton">导出副本</button>
+              </div>
+              <div class="watermark-grid">
+                <label>
+                  <span>申请人姓名/昵称</span>
+                  <input type="text" id="watermarkApplicantName" placeholder="例：张三" />
+                </label>
+                <label>
+                  <span>选择图片或 PDF</span>
+                  <input type="file" id="watermarkFileInput" accept="image/*,.pdf,application/pdf" />
+                </label>
+                <label class="watermark-text-field">
+                  <span>水印文案</span>
+                  <textarea id="watermarkText" readonly></textarea>
+                </label>
+              </div>
+              <div class="watermark-preview" id="watermarkPreview">
+                <span>上传证件副本后在这里预览。图片可直接导出水印副本；PDF 第一版提供本地预览和打印保存。</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="main-panel hidden" id="checklistTab">
+            <div class="summary-strip" id="summaryStrip"></div>
+            <div class="filters" id="filters"></div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="col-index">序号</th>
+                    <th>资料名称</th>
+                    <th>类别</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="documentTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="main-panel hidden" id="formsTab">
+            <div class="panel-heading">
+              <div>
+                <h2>官网表格填写对照</h2>
+                <p>把官网英文/多步骤字段转成中文预填表。你可以先填写“我的填写内容”，再对应官网位置录入。</p>
+              </div>
+              <button class="secondary-button" id="exportFieldsButton">导出 CSV</button>
+            </div>
+            <div id="formMapping"></div>
+          </section>
+
+          <section class="main-panel hidden" id="itineraryTab">
+            <div class="panel-heading">
+              <div>
+                <h2>签证行程单生成器</h2>
+                <p>输入城市、晚数、酒店和航班，生成可导出的每日行程与材料一致性检查。</p>
+              </div>
+              <div class="panel-actions">
+                <button class="secondary-button" id="exportItineraryButton">导出 CSV</button>
+                <button class="primary-button" id="generateItineraryButton">生成行程</button>
+              </div>
+            </div>
+            <div class="itinerary-form">
+              <div class="itinerary-grid">
+                <label>
+                  <span>出发日期</span>
+                  <input type="date" id="itineraryStartDate" />
+                </label>
+                <label>
+                  <span>出发城市</span>
+                  <input type="text" id="itineraryOriginCity" />
+                </label>
+                <label>
+                  <span>返回城市</span>
+                  <input type="text" id="itineraryReturnCity" />
+                </label>
+                <label>
+                  <span>行程节奏</span>
+                  <select id="itineraryPace">
+                    <option value="relaxed">轻松</option>
+                    <option value="normal">标准</option>
+                    <option value="compact">紧凑</option>
+                  </select>
+                </label>
+                <label>
+                  <span>入境航班</span>
+                  <input type="text" id="itineraryInboundFlight" placeholder="例：MU709 上海-马德里 2026-10-01" />
+                </label>
+                <label>
+                  <span>离境航班</span>
+                  <input type="text" id="itineraryOutboundFlight" placeholder="例：MU710 巴塞罗那-上海 2026-10-05" />
+                </label>
+              </div>
+              <label class="itinerary-cities">
+                <span>城市停留</span>
+                <textarea id="itineraryCitiesInput" class="itinerary-cities-input" spellcheck="false"></textarea>
+              </label>
+            </div>
+            <div class="itinerary-checks" id="itineraryChecks"></div>
+            <div class="itinerary-summary" id="itinerarySummary"></div>
+            <div class="table-wrap">
+              <table class="itinerary-table">
+                <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>天数</th>
+                    <th>城市</th>
+                    <th>行程安排</th>
+                    <th>酒店</th>
+                    <th>航班</th>
+                  </tr>
+                </thead>
+                <tbody id="itineraryResult"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="main-panel hidden" id="foldersTab">
+            <div class="panel-heading">
+              <div>
+                <h2>资料夹结构预览</h2>
+                <p>可在支持的浏览器里选择本机目录并创建资料夹；不支持时下载脚本或复制命令。</p>
+              </div>
+              <div class="panel-actions">
+                <button class="secondary-button" id="downloadMkdirScriptButton">下载脚本</button>
+                <button class="secondary-button" id="copyMkdirButton">复制命令</button>
+                <button class="primary-button" id="createFoldersButton">创建到本机</button>
+              </div>
+            </div>
+            <div class="folder-status" id="folderStatus"></div>
+            <pre class="folder-tree" id="folderTree"></pre>
+            <textarea class="command-box" id="mkdirCommand" readonly></textarea>
+          </section>
+
+          <section class="main-panel hidden" id="sourcesTab">
+            <div class="panel-heading">
+              <div>
+                <h2>官方来源</h2>
+                <p>同一材料出现冲突时，以官方系统或当前领区签证中心页面为准。</p>
+              </div>
+            </div>
+            <div class="source-list" id="sourceList"></div>
+          </section>
+
+          <section class="main-panel hidden" id="iterationsTab">
+            <div class="panel-heading">
+              <div>
+                <h2>版本迭代</h2>
+                <p>用于持续补国家、补模板、标记官方页面变更。</p>
+              </div>
+            </div>
+            <div class="iteration-list" id="iterationList"></div>
+          </section>
+
+          <aside class="inspector" aria-label="资料详情">
+            <div class="inspector-top">
+              <span>选择的资料</span>
+              <button class="ghost-button" id="nextDocButton">下一个</button>
+            </div>
+            <div id="documentInspector"></div>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="data.js?v=0.5.1"></script>
+    <script src="formFields.js?v=0.5.1"></script>
+    <script src="caseStore.js?v=0.5.1"></script>
+    <script src="folderEngine.js?v=0.5.1"></script>
+    <script src="flowEngine.js?v=0.5.1"></script>
+    <script src="itineraryRules.js?v=0.5.1"></script>
+    <script src="itineraryEngine.js?v=0.5.1"></script>
+    <script src="watermarkEngine.js?v=0.5.1"></script>
+    <script src="app.js?v=0.5.1"></script>
+    <script src="authGate.js?v=0.5.1"></script>
+  </body>
+</html>
