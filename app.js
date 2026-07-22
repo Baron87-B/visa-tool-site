@@ -41,7 +41,7 @@
     jurisdiction: initialSnapshot.jurisdiction || "",
     filter: initialSnapshot.filter || "all",
     selectedDocId: initialSnapshot.selectedDocId || "",
-    tab: "flow",
+    tab: "overview",
     cases: initialCaseData.cases,
     activeCaseId: initialCaseData.activeCase?.id || "",
     statuses: initialSnapshot.statuses || {},
@@ -58,6 +58,7 @@
       mimeType: ""
     }
   };
+  const stageTabs = ["overview", "plan", "materials", "fill", "review"];
 
   const els = {
     destinationList: document.getElementById("destinationList"),
@@ -80,6 +81,7 @@
     timelineTranslationToggle: document.getElementById("timelineTranslationToggle"),
     timelineRows: document.getElementById("timelineRows"),
     documentTable: document.getElementById("documentTable"),
+    inspectorPanel: document.querySelector(".inspector"),
     inspector: document.getElementById("documentInspector"),
     folderTree: document.getElementById("folderTree"),
     folderDocumentMap: document.getElementById("folderDocumentMap"),
@@ -1279,9 +1281,11 @@
     document.querySelectorAll(".tab").forEach((button) => {
       button.classList.toggle("active", button.dataset.tab === state.tab);
     });
-    ["flow", "checklist", "forms", "itinerary", "folders", "sources", "iterations"].forEach((tab) => {
+    stageTabs.forEach((tab) => {
       document.getElementById(`${tab}Tab`).classList.toggle("hidden", state.tab !== tab);
     });
+    const isMaterialsStage = state.tab === "materials";
+    els.inspectorPanel.classList.toggle("hidden", !isMaterialsStage);
   }
 
   function render() {
@@ -1364,14 +1368,14 @@
     }
     if (goFolderButton) {
       state.selectedDocId = goFolderButton.dataset.goFolder;
-      state.tab = "folders";
+      state.tab = "materials";
       render();
       focusFolderDoc(state.selectedDocId);
       return;
     }
     if (folderDocButton) {
       state.selectedDocId = folderDocButton.dataset.folderDoc;
-      state.tab = "checklist";
+      state.tab = "materials";
       render();
       return;
     }
@@ -1509,7 +1513,7 @@
   });
 
   document.getElementById("folderButton").addEventListener("click", () => {
-    state.tab = "folders";
+    state.tab = "materials";
     render();
   });
 
@@ -1704,7 +1708,7 @@
   }
 
   document.getElementById("reviewCycleButton").addEventListener("click", () => {
-    state.tab = "iterations";
+    state.tab = "review";
     render();
   });
 

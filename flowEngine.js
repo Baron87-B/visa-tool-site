@@ -7,15 +7,15 @@
     const checklistStatus = doneDocs.length === 0 ? "in_progress" : doneDocs.length === requiredDocs.length ? "done" : "in_progress";
 
     return [
-      step("destination", "选择签证类型", "确认目的地、签证类型和受理领区。", "已选择", "done", "checklist", 1, 0),
-      step("profile", "填写申请人画像", "身份、目的、同行和邀请情况会影响材料清单。", "调整画像", "done", "checklist", 1, 0),
-      step("checklist", "查看资料清单", `当前需重点处理 ${requiredDocs.length} 项必需/条件材料。`, "查看清单", checklistStatus, "checklist", 1, requiredDocs.length),
-      step("timeline", "生成时间计划", "按递签日期倒排公司盖章、银行流水、酒店保险和最终复核。", "生成计划", hasTimeline ? "done" : "waiting", "flow", 1, 0),
-      step("documents", "准备/上传资料", "逐项收集文件并标记状态，优先处理需要第三方配合的材料。", "整理资料", doneDocs.length > 0 ? "in_progress" : "waiting", "folders", 7, requiredDocs.length),
-      step("forms", "填写官网表格", hasFormMapping ? "先在中文对照表里写好答案，再转填官网。" : "当前目的地暂无表格字段映射。", "填写表格", hasFormMapping ? "ready" : "waiting", "forms", 1, 0),
-      step("itinerary", "生成行程单", "让酒店、航班、保险、主目的地和表格日期互相一致。", "生成行程", hasItinerary ? "ready" : "waiting", "itinerary", 1, 0),
-      step("watermark", "水印与导出", "给证件副本添加用途水印，只处理副本，不覆盖原文件。", "添加水印", "ready", "flow", 1, 0),
-      step("finalReview", "递签前复核", `按 ${destination.name} 当前官方来源做最终检查。`, "最终复核", "waiting", "sources", 1, 0)
+      step("destination", "选择签证类型", "确认目的地、签证类型和受理领区。", "已选择", "done", "overview", 1, 0),
+      step("profile", "填写申请人画像", "身份、目的、同行和邀请情况会影响材料清单。", "调整画像", "done", "overview", 1, 0),
+      step("checklist", "查看资料清单", `当前需重点处理 ${requiredDocs.length} 项必需/条件材料。`, "查看材料", checklistStatus, "materials", 1, requiredDocs.length),
+      step("timeline", "生成时间计划", "按递签日期倒排公司盖章、银行流水、酒店保险和最终复核。", "生成计划", hasTimeline ? "done" : "waiting", "plan", 1, 0),
+      step("documents", "准备/上传资料", "逐项收集文件并标记状态，优先处理需要第三方配合的材料。", "整理资料", doneDocs.length > 0 ? "in_progress" : "waiting", "materials", 7, requiredDocs.length),
+      step("forms", "填写官网表格", hasFormMapping ? "先在中文对照表里写好答案，再转填官网。" : "当前目的地暂无表格字段映射。", "填写表格", hasFormMapping ? "ready" : "waiting", "fill", 1, 0),
+      step("itinerary", "生成行程单", "让酒店、航班、保险、主目的地和表格日期互相一致。", "生成行程", hasItinerary ? "ready" : "waiting", "fill", 1, 0),
+      step("watermark", "水印与导出", "给证件副本添加用途水印，只处理副本，不覆盖原文件。", "添加水印", "ready", "review", 1, 0),
+      step("finalReview", "递签前复核", `按 ${destination.name} 当前官方来源做最终检查。`, "最终复核", "waiting", "review", 1, 0)
     ];
   }
 
