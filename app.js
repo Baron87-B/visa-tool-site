@@ -41,10 +41,11 @@
     jurisdiction: initialSnapshot.jurisdiction || "",
     filter: initialSnapshot.filter || "all",
     selectedDocId: initialSnapshot.selectedDocId || "",
-    tab: "overview",
+    tab: "progress",
     cases: initialCaseData.cases,
     activeCaseId: initialCaseData.activeCase?.id || "",
     statuses: initialSnapshot.statuses || {},
+    timelineTaskStatuses: initialSnapshot.timelineTaskStatuses || {},
     folderScan: initialSnapshot.folderScan || {},
     formFieldValues: initialSnapshot.formFieldValues || loadFormFieldValues(),
     itinerary: itineraryForSnapshot(initialSnapshot, initialDestinationId),
@@ -58,7 +59,7 @@
       mimeType: ""
     }
   };
-  const stageTabs = ["overview", "plan", "materials", "fill", "review"];
+  const stageTabs = ["progress", "materials", "fill", "review"];
 
   const els = {
     destinationList: document.getElementById("destinationList"),
@@ -84,7 +85,6 @@
     inspectorPanel: document.querySelector(".inspector"),
     inspector: document.getElementById("documentInspector"),
     folderTree: document.getElementById("folderTree"),
-    folderDocumentMap: document.getElementById("folderDocumentMap"),
     mkdirCommand: document.getElementById("mkdirCommand"),
     folderStatus: document.getElementById("folderStatus"),
     sourceList: document.getElementById("sourceList"),
@@ -253,6 +253,7 @@
       filter: state.filter,
       selectedDocId: state.selectedDocId,
       statuses: state.statuses,
+      timelineTaskStatuses: state.timelineTaskStatuses,
       folderScan: state.folderScan,
       formFieldValues: state.formFieldValues,
       itinerary: state.itinerary,
@@ -306,6 +307,7 @@
       filter: "all",
       selectedDocId: "",
       statuses: {},
+      timelineTaskStatuses: {},
       folderScan: {},
       formFieldValues: state.formFieldValues,
       itinerary: loadItineraryValues(destinationId),
@@ -362,6 +364,7 @@
     state.filter = snapshot.filter || "all";
     state.selectedDocId = snapshot.selectedDocId || "";
     state.statuses = snapshot.statuses || {};
+    state.timelineTaskStatuses = snapshot.timelineTaskStatuses || {};
     state.folderScan = snapshot.folderScan || {};
     state.formFieldValues = snapshot.formFieldValues || loadFormFieldValues();
     state.itinerary = itineraryForSnapshot(snapshot, state.destinationId);
@@ -430,13 +433,16 @@
   }
 
   function renderFlow() {
+    const timelinePlan = currentTimelinePlan();
     const steps = window.VISA_FLOW_ENGINE.buildFlowSteps({
       destination: destination(),
       documents: visibleDocuments(),
       statuses: state.statuses,
       hasFormMapping: Boolean(formMapping()),
       hasTimeline: Boolean(state.timeline.submissionDate),
-      hasItinerary: Boolean(window.VISA_ITINERARY_RULES?.[state.destinationId])
+      hasItinerary: Boolean(window.VISA_ITINERARY_RULES?.[state.destinationId]),
+      timelineTaskStatuses: state.timelineTaskStatuses,
+      timelineRows: timelinePlan.rows
     });
     els.flowSteps.innerHTML = steps
       .map(
@@ -492,19 +498,17 @@
     }
 
     els.documentTable.innerHTML = docs
-      .map((doc, index) => {
+      .map((doc) => {
         const selected = doc.id === state.selectedDocId ? "selected" : "";
         const status = state.statuses[doc.id] || "pending";
         const location = state.folderPlan?.documentLocations?.[doc.id];
         const scan = state.folderScan?.[doc.id];
         return `<tr class="${selected}" data-doc="${doc.id}">
-          <td class="col-index">${index + 1}</td>
           <td>
             <div class="doc-name">${doc.name}</div>
             <div class="doc-note">${doc.summary}</div>
-            ${location ? `<div class="doc-folder-link">资料夹：${escapeHtml(location.folder)}${scan?.fileCount ? ` · 检测到 ${scan.fileCount} 个文件` : ""}</div>` : ""}
+            <span class="badge ${doc.type}">${labels[doc.type]}</span>
           </td>
-          <td><span class="badge ${doc.type}">${labels[doc.type]}</span></td>
           <td>
             <select class="status-select" data-status-doc="${doc.id}">
               <option value="pending" ${status === "pending" ? "selected" : ""}>未开始</option>
@@ -515,6 +519,10 @@
               <option value="not_applicable" ${status === "not_applicable" ? "selected" : ""}>不适用</option>
             </select>
           </td>
+          <td>${renderLeadTimeCell(doc)}</td>
+          <td>${renderFolderCell(doc, location, scan)}</td>
+          <td>${renderMaterialTemplateSummary(doc)}</td>
+          <td>${renderMaterialSourceSummary()}</td>
           <td><div class="doc-actions">
             <button data-inspect="${doc.id}">查看</button>
             ${location ? `<button data-go-folder="${doc.id}">资料夹</button>` : ""}
@@ -522,6 +530,55 @@
         </tr>`;
       })
       .join("");
+  }
+
+  function renderLeadTimeCell(doc) {
+    const notes = [];
+    notes.push(`提前 ${doc.leadTimeDays || 0} 天`);
+    if (doc.needsStamp) notes.push("需盖章");
+    if (doc.expiresBeforeSubmission) notes.push("注意有效期");
+    if (doc.owner) notes.push(ownerLabel(doc.owner));
+    return `<div class="doc-note">${notes.map(escapeHtml).join("<br>")}</div>`;
+  }
+
+  function ownerLabel(owner) {
+    return {
+      applicant: "申请人",
+      employer: "公司/学校",
+      bank: "银行",
+      host: "邀请方",
+      insurer: "保险机构",
+      airline_hotel: "航班/酒店",
+      government: "官方系统"
+    }[owner] || owner;
+  }
+
+  function renderFolderCell(doc, location, scan) {
+    if (!location) {
+      return `<div class="doc-note">${escapeHtml(doc.folder || "待生成资料夹")}</div>`;
+    }
+    return `<button class="folder-inline-button" type="button" data-go-folder="${escapeHtml(doc.id)}">
+      <strong>${escapeHtml(location.folder)}</strong>
+      <span>${escapeHtml(folderScanLabel(scan))}</span>
+    </button>`;
+  }
+
+  function renderMaterialTemplateSummary(doc) {
+    const templates = templatesForDocument(doc.id);
+    if (!templates.length) return `<span class="muted">暂无专用模板</span>`;
+    const officialCount = templates.filter((item) => item.kind === "official_link").length;
+    const preparedCount = templates.length - officialCount;
+    const text = [
+      officialCount ? `${officialCount} 个官方表格` : "",
+      preparedCount ? `${preparedCount} 个准备模板` : ""
+    ].filter(Boolean).join(" / ");
+    return `<button class="template-summary-button" type="button" data-inspect="${escapeHtml(doc.id)}">${escapeHtml(text)}</button>`;
+  }
+
+  function renderMaterialSourceSummary() {
+    const dest = destination();
+    const highCount = dest.sources.filter((source) => source.confidence === "high").length;
+    return `<button class="source-summary-button" type="button" data-open-review="sources">${highCount ? `${highCount} 个高置信来源` : `${dest.sources.length} 个官方来源`}</button>`;
   }
 
   function renderInspector() {
@@ -614,40 +671,9 @@
     state.folderPlan = plan;
     els.folderTree.textContent = plan.tree;
     els.mkdirCommand.value = plan.mkdirCommand;
-    els.folderDocumentMap.innerHTML = renderFolderDocumentMap(plan);
     const canCreate = window.VISA_FOLDER_ENGINE.canCreateLocalFolders(window);
     els.folderStatus.innerHTML = `<strong>${plan.root}</strong>
       <span>${plan.folders.length} 个资料夹，${Object.keys(plan.documentLocations).length} 项资料已建立对应关系，${plan.templateFiles.length} 个模板/说明文件。${canCreate ? "可选择案件资料夹扫描文件，系统只判断是否放入文件，不判断内容真实性。" : "当前浏览器不支持直接扫描或创建，可下载脚本或复制命令。"}</span>`;
-  }
-
-  function renderFolderDocumentMap(plan) {
-    return plan.folders
-      .map((folder) => {
-        const docs = plan.folderDocuments[folder] || [];
-        return `<section class="folder-map-card" data-folder-name="${escapeHtml(folder)}">
-          <div class="folder-map-head">
-            <strong>${escapeHtml(folder)}</strong>
-            <span>${docs.length} 项资料</span>
-          </div>
-          <div class="folder-doc-list">
-            ${docs.map((location) => renderFolderDocItem(location)).join("")}
-          </div>
-        </section>`;
-      })
-      .join("");
-  }
-
-  function renderFolderDocItem(location) {
-    const scan = state.folderScan?.[location.docId];
-    const status = state.statuses[location.docId] || "pending";
-    const templateCount = templatesForDocument(location.docId).length;
-    return `<button class="folder-doc-item ${status}" type="button" data-folder-doc="${location.docId}">
-      <span>
-        <strong>${escapeHtml(location.name)}</strong>
-        <small>${escapeHtml(location.template || "资料文件")} · ${templateCount} 个模板/官方表格 · ${escapeHtml(folderScanLabel(scan))}</small>
-      </span>
-      <em>${escapeHtml(documentStatusLabel(status))}</em>
-    </button>`;
   }
 
   function folderScanLabel(scan) {
@@ -789,25 +815,50 @@
     saveTimelineValues();
   }
 
-  function renderTimeline() {
+  function currentTimelinePlan() {
     const documents = visibleDocuments().filter((doc) => doc.type !== "low_value");
-    const plan = window.VISA_FLOW_ENGINE.buildTimeline({
+    return window.VISA_FLOW_ENGINE.buildTimeline({
       submissionDate: state.timeline.submissionDate,
       departureDate: state.timeline.departureDate,
       profile: state.profile,
       destination: destination(),
-      documents
+      documents,
+      taskStatuses: state.timelineTaskStatuses
     });
+  }
+
+  function timelineTaskStatus(taskId) {
+    return state.timelineTaskStatuses?.[taskId] || "waiting";
+  }
+
+  function timelineStatusLabel(status) {
+    return {
+      done: "已打卡",
+      in_progress: "进行中",
+      waiting: "待开始"
+    }[status] || "待开始";
+  }
+
+  function renderTimeline() {
+    const plan = currentTimelinePlan();
     const extraItems = [];
     if (state.timeline.needsStamp) extraItems.push("需要盖章的材料优先联系公司、学校或邀请方。");
     if (state.timeline.needsTranslation) extraItems.push("预留翻译和格式复核时间。");
     els.timelineRows.innerHTML = plan.rows
       .map((row) => {
         const items = row.id === "work_finance" ? [...row.items, ...extraItems] : row.items;
-        return `<tr>
+        const status = timelineTaskStatus(row.id);
+        return `<tr data-timeline-status="${escapeHtml(status)}">
+          <td>
+            <select class="timeline-status-select" data-timeline-task="${escapeHtml(row.id)}">
+              <option value="waiting" ${status === "waiting" ? "selected" : ""}>待开始</option>
+              <option value="in_progress" ${status === "in_progress" ? "selected" : ""}>进行中</option>
+              <option value="done" ${status === "done" ? "selected" : ""}>已打卡</option>
+            </select>
+          </td>
           <td><span class="badge ${row.urgency}">${row.offsetLabel}</span></td>
           <td>${row.dueDate || "填写递签日期后生成"}</td>
-          <td><div class="doc-name">${row.title}</div></td>
+          <td><div class="doc-name">${row.title}</div><div class="doc-note">${timelineStatusLabel(status)}</div></td>
           <td><div class="doc-note">${items.map(escapeHtml).join("<br>")}</div></td>
         </tr>`;
       })
@@ -1051,7 +1102,7 @@
 
   function focusFolderDoc(docId) {
     window.setTimeout(() => {
-      const target = document.querySelector(`[data-folder-doc="${cssEscape(docId)}"]`);
+      const target = document.querySelector(`[data-doc="${cssEscape(docId)}"]`);
       if (!target) return;
       target.scrollIntoView({ block: "center", behavior: "smooth" });
       target.classList.add("attention");
@@ -1349,6 +1400,7 @@
     const goFolderButton = event.target.closest("[data-go-folder]");
     const folderDocButton = event.target.closest("[data-folder-doc]");
     const downloadTemplateButton = event.target.closest("[data-download-template]");
+    const openReviewButton = event.target.closest("[data-open-review]");
 
     if (deleteCaseButton) {
       deleteCase(deleteCaseButton.dataset.deleteCase);
@@ -1356,6 +1408,11 @@
     }
     if (downloadTemplateButton) {
       downloadDocumentTemplate(downloadTemplateButton.dataset.templateDoc, downloadTemplateButton.dataset.downloadTemplate);
+      return;
+    }
+    if (openReviewButton) {
+      state.tab = "review";
+      render();
       return;
     }
     if (addCityButton) {
@@ -1454,7 +1511,17 @@
     const statusDoc = event.target.dataset.statusDoc;
     if (statusDoc) {
       state.statuses[statusDoc] = event.target.value;
+      saveActiveCase({ quiet: true });
+      renderFlow();
       showToast("资料状态已更新");
+      return;
+    }
+    const timelineTask = event.target.dataset.timelineTask;
+    if (timelineTask) {
+      state.timelineTaskStatuses[timelineTask] = event.target.value;
+      saveActiveCase({ quiet: true });
+      renderFlow();
+      showToast("时间节点已更新");
       return;
     }
     const cityField = event.target.dataset.cityField;
@@ -1528,7 +1595,9 @@
       statuses: state.statuses,
       hasFormMapping: Boolean(formMapping()),
       hasTimeline: Boolean(state.timeline.submissionDate),
-      hasItinerary: Boolean(window.VISA_ITINERARY_RULES?.[state.destinationId])
+      hasItinerary: Boolean(window.VISA_ITINERARY_RULES?.[state.destinationId]),
+      timelineTaskStatuses: state.timelineTaskStatuses,
+      timelineRows: currentTimelinePlan().rows
     });
     const next = steps.find((step) => step.status !== "done") || steps[0];
     state.tab = next.tab;

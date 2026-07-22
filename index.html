@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>签证资料工作台</title>
-    <link rel="stylesheet" href="styles.css?v=0.7.0" />
+    <link rel="stylesheet" href="styles.css?v=0.7.1" />
   </head>
   <body>
     <section class="auth-gate" id="authGate" aria-label="访问口令">
@@ -51,7 +51,7 @@
         <div class="brand">
           <div>
             <strong>签证资料工作台</strong>
-            <span>v0.7.0 流程型工作台</span>
+            <span>v0.7.1 进度计划联动</span>
             <p class="brand-tagline">不会飞的 Kiwi，也可以找到起飞的方法。</p>
             <p class="brand-tagline en">From visa to journey, fly your own way.</p>
           </div>
@@ -148,31 +148,28 @@
         </section>
 
         <nav class="tabs" aria-label="工作区标签">
-          <button class="tab active" data-tab="overview">总览</button>
-          <button class="tab" data-tab="plan">计划</button>
+          <button class="tab active" data-tab="progress">进度与计划</button>
           <button class="tab" data-tab="materials">材料</button>
           <button class="tab" data-tab="fill">填写</button>
           <button class="tab" data-tab="review">复核与导出</button>
         </nav>
 
         <div class="content-grid">
-          <section class="main-panel" id="overviewTab">
+          <section class="main-panel" id="progressTab">
             <div class="panel-heading">
               <div>
-                <h2>办理总览</h2>
-                <p>从选择签证类型到递签前复核，按阶段推进；这里永远只回答“现在做到哪一步、下一步做什么”。</p>
+                <h2>进度与计划</h2>
+                <p>流程打卡和倒排时间表在这里联动；时间节点完成后，对应办理站点会自动更新。</p>
               </div>
               <button class="primary-button" id="nextFlowButton">下一步</button>
             </div>
             <div class="flow-steps" id="flowSteps"></div>
-          </section>
 
-          <section class="main-panel hidden" id="planTab">
             <div class="timeline-planner">
               <div class="panel-heading inline">
                 <div>
                   <h2>计划与时间节点</h2>
-                  <p>按预计递签日期倒排材料准备节奏。这里会成为后续导入日历的任务来源。</p>
+                  <p>按预计递签日期倒排材料准备节奏。节点状态会同步到上方流程，为后续导入日历做准备。</p>
                 </div>
                 <button class="secondary-button" id="generateTimelineButton">生成计划</button>
               </div>
@@ -198,15 +195,16 @@
                 <table class="timeline-table">
                   <thead>
                     <tr>
+                      <th>状态</th>
                       <th>节点</th>
                       <th>建议完成日</th>
                       <th>任务</th>
                       <th>材料重点</th>
                     </tr>
                   </thead>
-                  <tbody id="timelineRows"></tbody>
-                </table>
-              </div>
+                    <tbody id="timelineRows"></tbody>
+                  </table>
+                </div>
             </div>
           </section>
 
@@ -231,28 +229,24 @@
                   <table>
                     <thead>
                       <tr>
-                        <th class="col-index">序号</th>
-                        <th>资料名称</th>
-                        <th>类别</th>
+                        <th>材料</th>
                         <th>状态</th>
+                        <th>准备周期</th>
+                        <th>资料夹</th>
+                        <th>参考模板</th>
+                        <th>官方来源</th>
                         <th>操作</th>
                       </tr>
                     </thead>
                     <tbody id="documentTable"></tbody>
                   </table>
                 </div>
-                <div class="folder-workspace">
-                  <div class="panel-heading inline folder-inline-heading">
-                    <div>
-                      <h2>资料夹与模板</h2>
-                      <p>按材料清单生成目录、README、官方表格链接和可填写模板；扫描后可自动标记是否已放入文件。</p>
-                    </div>
-                  </div>
+                <details class="folder-utility-panel">
+                  <summary>批量资料夹命令</summary>
                   <div class="folder-status" id="folderStatus"></div>
-                  <div class="folder-document-map" id="folderDocumentMap"></div>
                   <pre class="folder-tree" id="folderTree"></pre>
                   <textarea class="command-box" id="mkdirCommand" readonly></textarea>
-                </div>
+                </details>
               </div>
               <aside class="inspector" aria-label="资料详情">
                 <div class="inspector-top">
@@ -410,15 +404,15 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="data.js?v=0.7.0"></script>
-    <script src="formFields.js?v=0.7.0"></script>
-    <script src="caseStore.js?v=0.7.0"></script>
-    <script src="folderEngine.js?v=0.7.0"></script>
-    <script src="flowEngine.js?v=0.7.0"></script>
-    <script src="itineraryRules.js?v=0.7.0"></script>
-    <script src="itineraryEngine.js?v=0.7.0"></script>
-    <script src="watermarkEngine.js?v=0.7.0"></script>
-    <script src="app.js?v=0.7.0"></script>
-    <script src="authGate.js?v=0.7.0"></script>
+    <script src="data.js?v=0.7.1"></script>
+    <script src="formFields.js?v=0.7.1"></script>
+    <script src="caseStore.js?v=0.7.1"></script>
+    <script src="folderEngine.js?v=0.7.1"></script>
+    <script src="flowEngine.js?v=0.7.1"></script>
+    <script src="itineraryRules.js?v=0.7.1"></script>
+    <script src="itineraryEngine.js?v=0.7.1"></script>
+    <script src="watermarkEngine.js?v=0.7.1"></script>
+    <script src="app.js?v=0.7.1"></script>
+    <script src="authGate.js?v=0.7.1"></script>
   </body>
 </html>

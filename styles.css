@@ -989,7 +989,8 @@ tbody tr.selected {
   border: 1px solid #ffd0cc;
 }
 
-.status-select {
+.status-select,
+.timeline-status-select {
   min-height: 30px;
   border: 1px solid var(--line-strong);
   border-radius: 6px;
@@ -1013,6 +1014,31 @@ tbody tr.selected {
 .doc-folder-link {
   margin-top: 5px;
   color: var(--primary);
+  font-size: 12px;
+}
+
+.folder-inline-button,
+.template-summary-button,
+.source-summary-button {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.folder-inline-button strong,
+.template-summary-button,
+.source-summary-button {
+  font-weight: 650;
+}
+
+.folder-inline-button span {
+  color: var(--muted);
   font-size: 12px;
 }
 
@@ -1140,8 +1166,21 @@ tbody tr.selected {
 
 .fill-stage-sections,
 .review-stage-sections,
-.folder-workspace {
+.folder-utility-panel {
   display: grid;
+}
+
+.folder-utility-panel {
+  border-top: 1px solid var(--line);
+  background: white;
+}
+
+.folder-utility-panel summary {
+  cursor: pointer;
+  padding: 14px 16px;
+  color: var(--primary);
+  font-weight: 650;
+  list-style-position: inside;
 }
 
 .folder-inline-heading {
@@ -1503,14 +1542,18 @@ tbody tr.selected {
 }
 
 .timeline-table th:nth-child(1) {
-  width: 72px;
+  width: 105px;
 }
 
 .timeline-table th:nth-child(2) {
-  width: 120px;
+  width: 72px;
 }
 
 .timeline-table th:nth-child(3) {
+  width: 120px;
+}
+
+.timeline-table th:nth-child(4) {
   width: 190px;
 }
 

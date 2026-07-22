@@ -1,5 +1,5 @@
 window.VISA_DATA = {
-  version: "0.7.0",
+  version: "0.7.1",
   generatedAt: "2026-06-27",
   reviewPolicy: {
     p0: "申根、美国、英国、加拿大每周复核官方来源。",
@@ -7,6 +7,12 @@ window.VISA_DATA = {
     p2: "eVisa 国家每月复核，用户生成清单当天做快速检查。"
   },
   iterations: [
+    {
+      version: "0.7.1",
+      date: "2026-07-22",
+      title: "进度计划联动",
+      detail: "将总览和计划合并为进度与计划，时间节点打卡会同步驱动办理流程状态；材料页合并资料清单、资料夹、参考模板和官方来源，减少重复页面和无效跳转。"
+    },
     {
       version: "0.7.0",
       date: "2026-07-22",
